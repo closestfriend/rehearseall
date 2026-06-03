@@ -43,7 +43,7 @@ describe('pickPersona', () => {
   });
 });
 
-import { buildInterviewerSystemInstruction } from './constants';
+import { buildInterviewerSystemInstruction, INTERVIEWER_CORE } from './constants';
 import type { ResumeData } from './types';
 
 const RESUME: ResumeData = { text: 'Ten years in ML research.', role: 'Research Scientist', experienceLevel: 'senior' };
@@ -74,5 +74,8 @@ describe('buildInterviewerSystemInstruction', () => {
   it('does not hardcode STAR in the core (only personas may use it)', () => {
     const core = out.split('PERSONA —')[0];
     expect(core).not.toContain('STAR');
+    // Guard the frozen constant directly too, so STAR can't creep back into
+    // the core regardless of which persona the builder is exercised with.
+    expect(INTERVIEWER_CORE).not.toContain('STAR');
   });
 });
