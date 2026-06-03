@@ -42,3 +42,37 @@ describe('pickPersona', () => {
     expect(LAST_PERSONA_STORAGE_KEY).toBe('hireprep_last_persona_v1');
   });
 });
+
+import { buildInterviewerSystemInstruction } from './constants';
+import type { ResumeData } from './types';
+
+const RESUME: ResumeData = { text: 'Ten years in ML research.', role: 'Research Scientist', experienceLevel: 'senior' };
+
+describe('buildInterviewerSystemInstruction', () => {
+  const skeptic = PERSONAS.find(p => p.id === 'skeptic')!;
+  const out = buildInterviewerSystemInstruction(RESUME, skeptic);
+
+  it('preserves the exact text-mode closing trigger substring', () => {
+    expect(out.toLowerCase()).toContain('concludes our interview');
+  });
+
+  it('keeps the English-persistence rule', () => {
+    expect(out).toContain('ENGLISH');
+  });
+
+  it('includes the persona fragment and name', () => {
+    expect(out).toContain(skeptic.name);
+    expect(out).toContain('evidence-driven');
+  });
+
+  it('injects the resume context', () => {
+    expect(out).toContain(RESUME.text);
+    expect(out).toContain(RESUME.role);
+    expect(out).toContain(RESUME.experienceLevel);
+  });
+
+  it('does not hardcode STAR in the core (only personas may use it)', () => {
+    const core = out.split('PERSONA —')[0];
+    expect(core).not.toContain('STAR');
+  });
+});
