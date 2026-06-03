@@ -5,7 +5,7 @@ import InterviewChat from './components/InterviewChat';
 import VoiceInterview from './components/VoiceInterview';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
 import { geminiService } from './services/geminiService';
-import { INTERVIEWER_VOICES } from './constants';
+import { pickPersona, LAST_PERSONA_STORAGE_KEY, InterviewerPersona } from './constants';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
@@ -21,7 +21,8 @@ const App: React.FC = () => {
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [currentTranscript, setCurrentTranscript] = useState<InterviewMessage[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<string>(INTERVIEWER_VOICES[0].id);
+  const [currentPersona, setCurrentPersona] = useState<InterviewerPersona | null>(null);
+  const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
 
   // Load history on mount
   useEffect(() => {
@@ -54,6 +55,14 @@ const App: React.FC = () => {
     setStage(AppStage.RESUME_UPLOAD);
   };
   
+  const startInterview = (mode: AppStage.INTERVIEWING_VOICE | AppStage.INTERVIEWING_TEXT) => {
+    const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
+    const persona = pickPersona(lastId);
+    setCurrentPersona(persona);
+    localStorage.setItem(LAST_PERSONA_STORAGE_KEY, persona.id);
+    setStage(mode);
+  };
+
   const handleResumeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (resumeData.text && resumeData.role) {
@@ -75,9 +84,11 @@ const App: React.FC = () => {
         date: Date.now(),
         resume: { ...resumeData },
         transcript: messages,
-        feedback: result
+        feedback: result,
+        personaName: currentPersona?.name ?? 'Unknown',
       };
       saveToHistory(entry);
+      setDisplayPersonaName(currentPersona?.name ?? null);
     } catch (err) {
       console.error('Feedback generation failed:', err);
       setFeedbackError(err instanceof Error ? err.message : String(err));
@@ -96,6 +107,7 @@ const App: React.FC = () => {
     setResumeData(entry.resume);
     setFeedback(entry.feedback);
     setCurrentTranscript(entry.transcript);
+    setDisplayPersonaName(entry.personaName ?? null);
     setStage(AppStage.FEEDBACK);
   };
 
@@ -308,25 +320,9 @@ ${transcriptMd}
       <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Choose Interview Format</h2>
       <p className="text-gray-500 mb-8 text-lg">We've analyzed your details. How would you like to practice today?</p>
 
-      <div className="max-w-md mx-auto mb-12 text-left">
-        <label htmlFor="voice-select" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
-          Interviewer voice <span className="text-gray-300 normal-case font-medium tracking-normal">(voice mode only)</span>
-        </label>
-        <select
-          id="voice-select"
-          value={selectedVoice}
-          onChange={(e) => setSelectedVoice(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-white text-gray-900 font-medium focus:outline-none focus:border-blue-500 transition-colors"
-        >
-          {INTERVIEWER_VOICES.map(v => (
-            <option key={v.id} value={v.id}>{v.label} — {v.description}</option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid md:grid-cols-2 gap-8">
         <button 
-          onClick={() => setStage(AppStage.INTERVIEWING_VOICE)}
+          onClick={() => startInterview(AppStage.INTERVIEWING_VOICE)}
           className="group bg-white p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
         >
           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -342,7 +338,7 @@ ${transcriptMd}
         </button>
 
         <button 
-          onClick={() => setStage(AppStage.INTERVIEWING_TEXT)}
+          onClick={() => startInterview(AppStage.INTERVIEWING_TEXT)}
           className="group bg-white p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
         >
           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -495,17 +491,18 @@ ${transcriptMd}
       case AppStage.LANDING: return renderLanding();
       case AppStage.RESUME_UPLOAD: return renderResumeUpload();
       case AppStage.INTERVIEW_MODE: return renderInterviewMode();
-      case AppStage.INTERVIEWING_TEXT: return (
-        <InterviewChat 
-          resume={resumeData} 
+      case AppStage.INTERVIEWING_TEXT: return currentPersona ? (
+        <InterviewChat
+          resume={resumeData}
+          persona={currentPersona}
           onFinish={processInterviewResults}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
-      );
-      case AppStage.INTERVIEWING_VOICE: return (
+      ) : renderInterviewMode();
+      case AppStage.INTERVIEWING_VOICE: return currentPersona ? (
         <VoiceInterview
           resume={resumeData}
-          voice={selectedVoice}
+          persona={currentPersona}
           onFinish={(transcript) => processInterviewResults(transcript.map(t => ({
             role: t.startsWith('Candidate') ? 'user' : 'assistant',
             content: t.split(': ')[1] || '',
@@ -513,7 +510,7 @@ ${transcriptMd}
           })))}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
-      );
+      ) : renderInterviewMode();
       case AppStage.FEEDBACK: return renderFeedback();
       default: return renderLanding();
     }
