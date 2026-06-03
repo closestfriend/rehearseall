@@ -104,7 +104,16 @@ Core interfaces:
 
 ## System Instructions (constants.ts)
 
-Both `SYSTEM_INSTRUCTION_INTERVIEWER` and `SYSTEM_INSTRUCTION_FEEDBACK` enforce **English language output** regardless of user input language. The interviewer conducts 5-7 questions mixing behavioral (STAR method) and technical questions.
+The interviewer prompt is split into a **frozen functional core + a per-session persona layer**, assembled by `buildInterviewerSystemInstruction(resume, persona)`:
+
+- `INTERVIEWER_CORE` holds the load-bearing rules that personas can never override: English-only output, one question at a time, ~5–7 questions, role-calibrated substance, a concision floor, and the verbatim closing line (`"Thank you for your time. This concludes our interview."`). STAR is **not** in the core — it was deliberately decoupled (it's a generic framework that misfits many target roles, and contradicted the evaluator's role-weighting). STAR now survives only as one option inside the personas that suit it (e.g. The Neutral Examiner).
+- `INTERVIEWER_PERSONAS` is a roster of six interviewers (The Skeptic, The Warm Mentor, The Rapid-Fire Screener, The Socratic Probe, The Seasoned Director, The Neutral Examiner). Each carries a flavor `fragment` and a mapped `voiceId`. `pickPersona(excludeId?)` selects one at random per interview with anti-repeat (last id persisted in `localStorage` under `hireprep_last_persona_v1`), so the same interviewer never appears twice in a row. The persona is hidden during the interview and revealed only on the feedback screen ("Interviewed by …") and in the Markdown export.
+- The persona drives the voice in voice mode (the old manual voice picker was removed); `INTERVIEWER_VOICES` remains as the set those `voiceId`s map to.
+- `SYSTEM_INSTRUCTION_FEEDBACK` (the evaluator prompt) still enforces **English output** and its ASR/role-weighting logic, and is deliberately **never told the persona** so scoring stays calibrated to substance, not to which interviewer was assigned.
+
+Design/plan: `docs/superpowers/specs/2026-06-02-randomized-interviewer-personas-design.md` and `docs/superpowers/plans/2026-06-02-randomized-interviewer-personas.md`.
+
+> Note: text and voice interviews both end via a manual button. `InterviewChat.tsx` checks for the `concludes our interview` substring but the block is currently an empty no-op (pre-existing) — the closing line is preserved verbatim but does not yet auto-end the session.
 
 ## Technical Stack
 

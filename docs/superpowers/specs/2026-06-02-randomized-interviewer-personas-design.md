@@ -52,7 +52,7 @@ Only genuinely functional elements are frozen (deliberately picky):
 |---|---|
 | English gating (persist in English even if the user switches) | Output correctness; feedback/ASR logic assumes English. |
 | One question at a time | Turn-based flow + transcript structure depend on it. |
-| Exact closing line containing `concludes our interview` | String trigger for text auto-end (`InterviewChat.tsx:79`, `.toLowerCase().includes("concludes our interview")`). Must be emitted verbatim. |
+| Exact closing line containing `concludes our interview` | `InterviewChat.tsx` checks this substring (`.toLowerCase().includes("concludes our interview")`). **Correction (post-implementation):** that block is a pre-existing empty no-op, so it does **not** currently auto-end the interview — both modes end via a manual button. We still preserve the line verbatim (forward-compatible if the block is ever wired up, and harmless), but it is not a live trigger. |
 | ~5–7 question bound | Flow gate; bounds session length / voice cost. |
 | Role-calibrated substance (concrete real-experience examples + technical depth) | The product's purpose and what the evaluator scores. **Method-agnostic — no named framework.** |
 | Concision floor | Functionally matters for voice latency + clean ASR. Persona modulates *degree*, never removes it. |
