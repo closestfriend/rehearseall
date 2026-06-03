@@ -1,18 +1,18 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleGenAI, Modality } from '@google/genai';
-import { MODELS, SYSTEM_INSTRUCTION_INTERVIEWER } from '../constants';
+import { MODELS, buildInterviewerSystemInstruction, InterviewerPersona } from '../constants';
 import { ResumeData } from '../types';
 import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
 
 interface VoiceInterviewProps {
   resume: ResumeData;
-  voice: string;
+  persona: InterviewerPersona;
   onFinish: (transcript: string[]) => void;
   onCancel: () => void;
 }
 
-const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, voice, onFinish, onCancel }) => {
+const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFinish, onCancel }) => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking' | 'idle'>('connecting');
   const [volume, setVolume] = useState(0);
@@ -101,18 +101,9 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, voice, onFinish
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } }
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceId } }
           },
-          systemInstruction: `
-            ${SYSTEM_INSTRUCTION_INTERVIEWER}
-            Candidate Resume Info: ${resume.text}
-            Target Role: ${resume.role}
-            Experience: ${resume.experienceLevel}
-            
-            ADVICE FOR INTERVIEWER: 
-            - Maintain a professional recruiter persona.
-            - Focus on the candidate's specific background in ${resume.role}.
-          `,
+          systemInstruction: buildInterviewerSystemInstruction(resume, persona),
           inputAudioTranscription: {},
           outputAudioTranscription: {}
         },
@@ -192,7 +183,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, voice, onFinish
       setIsConnecting(false);
       setStatus('idle');
     }
-  }, [resume, voice, flushBuffers]);
+  }, [resume, persona, flushBuffers]);
 
   useEffect(() => {
     startSession();
