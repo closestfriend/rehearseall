@@ -22,3 +22,23 @@ describe('INTERVIEWER_PERSONAS', () => {
     }
   });
 });
+
+import { pickPersona, LAST_PERSONA_STORAGE_KEY, INTERVIEWER_PERSONAS as PERSONAS } from './constants';
+
+describe('pickPersona', () => {
+  it('returns a persona from the roster', () => {
+    const ids = new Set(PERSONAS.map(p => p.id));
+    expect(ids.has(pickPersona().id)).toBe(true);
+  });
+
+  it('never returns the excluded persona', () => {
+    const exclude = PERSONAS[0].id;
+    for (let i = 0; i < 200; i++) {
+      expect(pickPersona(exclude).id).not.toBe(exclude);
+    }
+  });
+
+  it('exposes a stable localStorage key', () => {
+    expect(LAST_PERSONA_STORAGE_KEY).toBe('hireprep_last_persona_v1');
+  });
+});

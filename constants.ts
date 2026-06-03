@@ -118,3 +118,12 @@ export const INTERVIEWER_PERSONAS: InterviewerPersona[] = [
     fragment: `You are an even, by-the-book examiner. You run a structured interview with a steady, neutral tone. Where it fits the role, you may organize behavioral questions around the situation, the action taken, and the result. Open with a plain, professional introduction.`,
   },
 ];
+
+export const LAST_PERSONA_STORAGE_KEY = 'hireprep_last_persona_v1';
+
+export function pickPersona(excludeId?: string): InterviewerPersona {
+  const pool = INTERVIEWER_PERSONAS.filter(p => p.id !== excludeId);
+  const choices = pool.length > 0 ? pool : INTERVIEWER_PERSONAS;
+  const idx = Math.floor(Math.random() * choices.length);
+  return choices[idx];
+}
