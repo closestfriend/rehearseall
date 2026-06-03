@@ -1,16 +1,17 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Chat } from '@google/genai';
-import { MODELS, SYSTEM_INSTRUCTION_INTERVIEWER } from '../constants';
+import { MODELS, buildInterviewerSystemInstruction, InterviewerPersona } from '../constants';
 import { InterviewMessage, ResumeData } from '../types';
 
 interface InterviewChatProps {
   resume: ResumeData;
+  persona: InterviewerPersona;
   onFinish: (transcript: InterviewMessage[]) => void;
   onCancel: () => void;
 }
 
-const InterviewChat: React.FC<InterviewChatProps> = ({ resume, onFinish, onCancel }) => {
+const InterviewChat: React.FC<InterviewChatProps> = ({ resume, persona, onFinish, onCancel }) => {
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -23,12 +24,7 @@ const InterviewChat: React.FC<InterviewChatProps> = ({ resume, onFinish, onCance
       const chat = ai.chats.create({
         model: MODELS.TEXT_CHEF,
         config: {
-          systemInstruction: `
-            ${SYSTEM_INSTRUCTION_INTERVIEWER}
-            Candidate Resume: ${resume.text}
-            Target Role: ${resume.role}
-            Level: ${resume.experienceLevel}
-          `,
+          systemInstruction: buildInterviewerSystemInstruction(resume, persona),
         }
       });
       chatRef.current = chat;
