@@ -59,6 +59,9 @@ const App: React.FC = () => {
     const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
     const persona = pickPersona(lastId);
     setCurrentPersona(persona);
+    setDisplayPersonaName(null); // clear any name left over from viewing past history
+    // Persist the choice up front (before the interview completes) so the next
+    // run still excludes it even if the user backs out — deliberate, for anti-repeat.
     localStorage.setItem(LAST_PERSONA_STORAGE_KEY, persona.id);
     setStage(mode);
   };
@@ -79,16 +82,22 @@ const App: React.FC = () => {
       const result = await geminiService.generateFeedback(resumeData, messages);
       setFeedback(result);
 
+      // currentPersona is always set before an interview can start (the
+      // INTERVIEWING_* render cases gate on it), so the fallback only guards
+      // an impossible state. Capture once so the saved entry and the on-screen
+      // reveal can never disagree.
+      const personaName = currentPersona?.name ?? 'Unknown';
+
       const entry: HistoryEntry = {
         id: crypto.randomUUID(),
         date: Date.now(),
         resume: { ...resumeData },
         transcript: messages,
         feedback: result,
-        personaName: currentPersona?.name ?? 'Unknown',
+        personaName,
       };
       saveToHistory(entry);
-      setDisplayPersonaName(currentPersona?.name ?? null);
+      setDisplayPersonaName(personaName);
     } catch (err) {
       console.error('Feedback generation failed:', err);
       setFeedbackError(err instanceof Error ? err.message : String(err));
