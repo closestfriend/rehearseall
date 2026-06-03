@@ -20,7 +20,7 @@ const InterviewChat: React.FC<InterviewChatProps> = ({ resume, persona, onFinish
 
   useEffect(() => {
     const initChat = async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
       const chat = ai.chats.create({
         model: MODELS.TEXT_CHEF,
         config: {
