@@ -1,0 +1,7 @@
+{
+  "name": "HirePrep AI",
+  "description": "An advanced AI-powered job interview simulator that analyzes your resume and conducts realistic mock interviews to sharpen your skills.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
