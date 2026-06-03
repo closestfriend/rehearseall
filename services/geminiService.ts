@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK, SYSTEM_INSTRUCTION_INTERVIEWER } from "../constants";
+import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from "../constants";
 import { InterviewFeedback, ResumeData, InterviewMessage } from "../types";
 
 export class GeminiService {
