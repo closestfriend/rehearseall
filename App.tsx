@@ -134,7 +134,7 @@ const App: React.FC = () => {
     }).join('\n\n');
 
     const md = `# Interview Report — ${resumeData.role} (${resumeData.experienceLevel})
-**Date:** ${isoDate} · **Score:** ${feedback.score}/100
+**Date:** ${isoDate} · **Score:** ${feedback.score}/100${displayPersonaName ? ` · **Interviewer:** ${displayPersonaName}` : ''}
 
 ## Key Strengths
 ${strengthsMd}
@@ -397,6 +397,11 @@ ${transcriptMd}
               <p className="text-gray-500 text-lg leading-relaxed">
                 Interview report for <strong>{resumeData.role}</strong> ({resumeData.experienceLevel}).
               </p>
+              {displayPersonaName && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Interviewed by <strong>{displayPersonaName}</strong>
+                </p>
+              )}
               <p className="text-xs text-gray-400 mt-2">Analyzed using Gemini 3 Pro Reasoning</p>
             </div>
           </div>
