@@ -24,6 +24,7 @@ export interface HistoryEntry {
   resume: ResumeData;
   transcript: InterviewMessage[];
   feedback: InterviewFeedback;
+  personaName: string;
 }
 
 export enum AppStage {
