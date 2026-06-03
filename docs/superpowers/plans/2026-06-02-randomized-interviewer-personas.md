@@ -727,6 +727,8 @@ git commit -m "feat: reveal interviewer persona on feedback screen and export"
 **Files:**
 - Read-only: `services/geminiService.ts`, `App.tsx:70`
 
+> **Note:** During Task 4's code review, `services/geminiService.ts` was found to import the (now-removed) `SYSTEM_INSTRUCTION_INTERVIEWER` without using it. That dangling import was removed in a dedicated commit. This task is now a pure confirmation that the evaluator references neither the interviewer prompt nor any persona.
+
 - [ ] **Step 1: Verify the persona never reaches the evaluator**
 
 Run:
