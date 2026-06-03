@@ -774,6 +774,6 @@ git add -A && git commit -m "chore: persona feature manual-smoke fixes"
 ## Notes for the implementer
 
 - **Do not touch** `SYSTEM_INSTRUCTION_FEEDBACK` in `constants.ts` or anything in `services/geminiService.ts` beyond reading it — the evaluator stays persona-blind by design.
-- **The closing substring `concludes our interview` is load-bearing** (`InterviewChat.tsx:79` string-matches it to auto-end text interviews). Task 4's test guards it; never let a persona override it.
+- **Preserve the closing substring `concludes our interview` verbatim.** `InterviewChat.tsx:79` checks for it, but the block is a pre-existing empty no-op — it does **not** actually auto-end the interview (both modes end via a manual button). We keep the line verbatim anyway (forward-compatible, harmless); Task 4's test guards it. Never let a persona override it.
 - `.env.local` holds the API key and is gitignored — never stage it.
 - Voice mode ends via a manual button (`VoiceInterview.tsx:211 handleFinish`), not the closing string — that's expected.
