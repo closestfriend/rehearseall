@@ -17,6 +17,8 @@ const App: React.FC = () => {
     role: '',
     experienceLevel: 'mid'
   });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [resumeParseState, setResumeParseState] = useState<'idle' | 'parsing' | 'error'>('idle');
   const [feedback, setFeedback] = useState<InterviewFeedback | null>(null);
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
@@ -52,7 +54,32 @@ const App: React.FC = () => {
   const handleStartResume = () => {
     setResumeData({ text: '', role: '', experienceLevel: 'mid' });
     setFeedback(null);
+    setUploadedFile(null);
+    setResumeParseState('idle');
     setStage(AppStage.RESUME_UPLOAD);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResumeParseState('parsing');
+    try {
+      const { parseResumeFile } = await import('./lib/resumeParser');
+      const text = await parseResumeFile(file);
+      setResumeData(prev => ({ ...prev, text }));
+      setUploadedFile(file);
+      setResumeParseState('idle');
+    } catch (err) {
+      console.error('Failed to parse resume file:', err);
+      setResumeParseState('error');
+    }
+    e.target.value = '';
+  };
+
+  const handleFileClear = () => {
+    setUploadedFile(null);
+    setResumeData(prev => ({ ...prev, text: '' }));
+    setResumeParseState('idle');
   };
   
   const startInterview = (mode: AppStage.INTERVIEWING_VOICE | AppStage.INTERVIEWING_TEXT) => {
@@ -294,11 +321,66 @@ ${transcriptMd}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Resume Content (Paste here)</label>
-            <textarea 
-              required
+            <div className="mb-3">
+              {uploadedFile ? (
+                <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-700 flex-grow truncate">{uploadedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={handleFileClear}
+                    className="text-blue-400 hover:text-blue-600 transition-colors"
+                    aria-label="Remove file"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label
+                    htmlFor="resume-file-input"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-all ${resumeParseState === 'parsing' ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    {resumeParseState === 'parsing' ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        Reading file…
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload PDF or .md
+                      </>
+                    )}
+                  </label>
+                  <input
+                    id="resume-file-input"
+                    type="file"
+                    accept=".pdf,.md,application/pdf,text/markdown"
+                    className="sr-only"
+                    onChange={handleFileUpload}
+                  />
+                  {resumeParseState === 'error' && (
+                    <p className="mt-2 text-xs text-red-500">Could not read that file — try another or paste your resume below.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              {uploadedFile ? 'Resume Content' : 'Resume Content (Paste here)'}
+            </label>
+            <textarea
+              required={!uploadedFile}
+              disabled={!!uploadedFile}
               placeholder="Paste your resume details, skills, and work history here..."
-              className="w-full h-64 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none"
+              className={`w-full h-64 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none ${uploadedFile ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
               value={resumeData.text}
               onChange={(e) => setResumeData({...resumeData, text: e.target.value})}
             />
@@ -445,15 +527,46 @@ ${transcriptMd}
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100">
-             <h3 className="text-xl font-bold text-gray-900 mb-6">Interview Transcript</h3>
-             <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
-                {currentTranscript.map((m, i) => (
-                  <div key={i} className={`p-4 rounded-2xl ${m.role === 'user' ? 'bg-blue-50 ml-8' : 'bg-white border border-gray-100 mr-8'}`}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">{m.role === 'user' ? 'You' : 'Interviewer'}</p>
-                    <p className="text-sm text-gray-700">{m.content}</p>
-                  </div>
-                ))}
+          <div className="bg-gradient-to-b from-gray-50 to-white rounded-3xl p-8 border border-gray-100">
+             <div className="flex items-center justify-between mb-6">
+               <h3 className="text-xl font-bold text-gray-900">Interview Transcript</h3>
+               <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-500">
+                 {currentTranscript.length} messages
+               </span>
+             </div>
+             <div className="transcript-scroll space-y-5 max-h-96 overflow-y-auto px-1 py-1">
+                {currentTranscript.map((m, i) => {
+                  const isUser = m.role === 'user';
+                  const speakerName = isUser ? 'You' : (displayPersonaName || 'Interviewer');
+                  const initial = isUser
+                    ? 'Y'
+                    : (displayPersonaName?.replace(/^The\s+/i, '').charAt(0).toUpperCase() || 'I');
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-end gap-3 animate-msg-in ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                      style={{ animationDelay: `${Math.min(i * 60, 600)}ms` }}
+                    >
+                      <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                        isUser
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                          : 'bg-gradient-to-br from-slate-700 to-slate-900 text-white'
+                      }`}>
+                        {initial}
+                      </div>
+                      <div className={`flex flex-col max-w-[78%] ${isUser ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[11px] font-semibold text-gray-400 mb-1 px-1">{speakerName}</span>
+                        <div className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                          isUser
+                            ? 'bg-blue-600 text-white rounded-2xl rounded-br-md shadow-blue-600/15'
+                            : 'bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-bl-md'
+                        }`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
 
