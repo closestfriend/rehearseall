@@ -22,6 +22,22 @@ describe('mapSuggestionsToMessages', () => {
   it('drops out-of-range replyIndex without throwing', () => {
     expect(mapSuggestionsToMessages([msg('user', 'A1')], [sug(5)])).toEqual([null]);
   });
+
+  it('matches multiple suggestions across a longer transcript', () => {
+    const transcript = [
+      msg('assistant', 'Q1'), msg('user', 'A1'),
+      msg('assistant', 'Q2'), msg('user', 'A2'),
+      msg('assistant', 'Q3'), msg('user', 'A3'),
+    ];
+    const out = mapSuggestionsToMessages(transcript, [sug(0), sug(2)]);
+    expect(out[1]).toEqual(sug(0)); // user turn 0
+    expect(out[3]).toBeNull();      // user turn 1 — no suggestion
+    expect(out[5]).toEqual(sug(2)); // user turn 2
+  });
+
+  it('returns an empty array for an empty transcript', () => {
+    expect(mapSuggestionsToMessages([], [sug(0)])).toEqual([]);
+  });
 });
 
 describe('buildTranscriptMarkdown', () => {
