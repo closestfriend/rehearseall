@@ -5,6 +5,7 @@ import InterviewChat from './components/InterviewChat';
 import VoiceInterview from './components/VoiceInterview';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
 import { geminiService } from './services/geminiService';
+import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { pickPersona, LAST_PERSONA_STORAGE_KEY, InterviewerPersona } from './constants';
 
 const STORAGE_KEY = 'hireprep_history_v1';
@@ -25,6 +26,16 @@ const App: React.FC = () => {
   const [currentTranscript, setCurrentTranscript] = useState<InterviewMessage[]>([]);
   const [currentPersona, setCurrentPersona] = useState<InterviewerPersona | null>(null);
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
+
+  const [expandedSuggestions, setExpandedSuggestions] = useState<Set<number>>(new Set());
+
+  const toggleSuggestion = (idx: number) => {
+    setExpandedSuggestions(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
 
   // Load history on mount
   useEffect(() => {
@@ -56,6 +67,7 @@ const App: React.FC = () => {
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
+    setExpandedSuggestions(new Set());
     setStage(AppStage.RESUME_UPLOAD);
   };
 
@@ -105,6 +117,7 @@ const App: React.FC = () => {
     setFeedbackError(null);
     setStage(AppStage.FEEDBACK);
     setCurrentTranscript(messages);
+    setExpandedSuggestions(new Set());
     try {
       const result = await geminiService.generateFeedback(resumeData, messages);
       setFeedback(result);
@@ -144,6 +157,7 @@ const App: React.FC = () => {
     setFeedback(entry.feedback);
     setCurrentTranscript(entry.transcript);
     setDisplayPersonaName(entry.personaName ?? null);
+    setExpandedSuggestions(new Set());
     setStage(AppStage.FEEDBACK);
   };
 
@@ -453,7 +467,9 @@ ${transcriptMd}
     </div>
   );
 
-  const renderFeedback = () => (
+  const renderFeedback = () => {
+    const suggestionByMessage = mapSuggestionsToMessages(currentTranscript, feedback?.suggestions);
+    return (
     <div className="max-w-4xl mx-auto py-12 px-4">
       {isLoadingFeedback ? (
         <div className="text-center py-24">
@@ -563,6 +579,32 @@ ${transcriptMd}
                         }`}>
                           {m.content}
                         </div>
+                        {isUser && suggestionByMessage[i] && (
+                          <div className="mt-2 w-full flex flex-col items-end">
+                            <button
+                              type="button"
+                              onClick={() => toggleSuggestion(i)}
+                              aria-expanded={expandedSuggestions.has(i)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                              </svg>
+                              Suggested improvement
+                              <svg className={`w-3.5 h-3.5 transition-transform ${expandedSuggestions.has(i) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            {expandedSuggestions.has(i) && (
+                              <div className="mt-2 w-full text-left bg-amber-50/60 border border-amber-100 rounded-2xl p-4 animate-msg-in">
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1">Why this fell short</p>
+                                <p className="text-sm text-gray-600 mb-3">{suggestionByMessage[i]!.critique}</p>
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1">Stronger answer</p>
+                                <p className="text-sm text-gray-800 bg-white border border-amber-100 rounded-xl p-3 leading-relaxed">{suggestionByMessage[i]!.modelAnswer}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -611,7 +653,8 @@ ${transcriptMd}
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   const getStageContent = () => {
     switch(stage) {
