@@ -80,8 +80,8 @@ Provide a structured feedback report in valid JSON:
 
 export const MODELS = {
   TEXT_CHEF: 'gemini-2.5-flash',
-  VOICE_INTERVIEWER: 'gemini-2.5-flash-native-audio-latest',
-  EVALUATOR: 'gemini-2.5-pro'
+  VOICE_INTERVIEWER: 'gemini-3.1-flash-live-preview',
+  EVALUATOR: 'gemini-3-flash-preview'
 };
 
 export const INTERVIEWER_VOICES: { id: string; label: string; description: string }[] = [
