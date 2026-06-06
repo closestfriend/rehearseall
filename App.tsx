@@ -169,10 +169,7 @@ const App: React.FC = () => {
 
     const strengthsMd = feedback.strengths.map(s => `- ${s}`).join('\n');
     const improvementsMd = feedback.improvements.map(s => `- ${s}`).join('\n');
-    const transcriptMd = currentTranscript.map(m => {
-      const speaker = m.role === 'user' ? '**You:**' : '**Interviewer:**';
-      return `${speaker} ${m.content}`;
-    }).join('\n\n');
+    const transcriptMd = buildTranscriptMarkdown(currentTranscript, feedback.suggestions);
 
     const md = `# Interview Report — ${resumeData.role} (${resumeData.experienceLevel})
 **Date:** ${isoDate} · **Score:** ${feedback.score}/100${displayPersonaName ? ` · **Interviewer:** ${displayPersonaName}` : ''}
