@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from "../constants";
 import { InterviewFeedback, ResumeData, InterviewMessage } from "../types";
+import { formatTranscriptForEvaluator } from "../lib/transcriptFormat";
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -11,7 +12,7 @@ export class GeminiService {
   }
 
   async generateFeedback(resume: ResumeData, transcript: InterviewMessage[]): Promise<InterviewFeedback> {
-    const chatTranscript = transcript.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+    const chatTranscript = formatTranscriptForEvaluator(transcript);
     
     const prompt = `
       RESUME: ${resume.text}
@@ -35,7 +36,19 @@ export class GeminiService {
             score: { type: Type.NUMBER },
             strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
             improvements: { type: Type.ARRAY, items: { type: Type.STRING } },
-            detailedAnalysis: { type: Type.STRING }
+            detailedAnalysis: { type: Type.STRING },
+            suggestions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  replyIndex: { type: Type.NUMBER },
+                  critique: { type: Type.STRING },
+                  modelAnswer: { type: Type.STRING }
+                },
+                required: ["replyIndex", "critique", "modelAnswer"]
+              }
+            }
           },
           required: ["score", "strengths", "improvements", "detailedAnalysis"]
         }
