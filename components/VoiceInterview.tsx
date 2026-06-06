@@ -174,7 +174,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
         for (let i = 0; i < pcm16.length; i++) sum += pcm16[i] * pcm16[i];
         setVolume(Math.sqrt(sum / pcm16.length) / 32768);
         const data = base64Encode(pcm16);
-        sessionPromise.then(s => s.sendRealtimeInput({ media: { data, mimeType: 'audio/pcm;rate=16000' } }));
+        sessionPromise.then(s => s.sendRealtimeInput({ audio: { data, mimeType: 'audio/pcm;rate=16000' } }));
       };
 
       sessionRef.current = await sessionPromise;
