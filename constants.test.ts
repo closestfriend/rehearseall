@@ -79,3 +79,16 @@ describe('buildInterviewerSystemInstruction', () => {
     expect(INTERVIEWER_CORE).not.toContain('STAR');
   });
 });
+
+import { SYSTEM_INSTRUCTION_FEEDBACK } from './constants';
+
+describe('SYSTEM_INSTRUCTION_FEEDBACK', () => {
+  it('gates inline suggestions on a sub-70 score', () => {
+    expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('below 70');
+  });
+
+  it('references replies by their printed USER REPLY index', () => {
+    expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('replyIndex');
+    expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('USER REPLY');
+  });
+});
