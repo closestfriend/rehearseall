@@ -24,6 +24,8 @@ adding any latency to the live interview.
 - Show coaching **only** when overall score < 70.
 - Each suggestion contains both a short **critique** and a concrete **model answer**.
 - Annotations are **collapsed by default**, expand on tap.
+- Suggestions are **included in the Markdown export**, interleaved after the
+  reply they coach.
 - No impact on the live conversation; work folds into the existing post-interview
   "Analyzing" phase.
 - Backward compatible with existing saved history.
@@ -32,7 +34,6 @@ adding any latency to the live interview.
 
 - Annotating every reply, or replies in interviews scoring ≥ 70.
 - Editing/replaying the interview from a suggestion.
-- Carrying suggestions into the Markdown export (intentionally UI-only for now).
 - The broader visual redesign (separate, later pass).
 
 ## Approach
@@ -156,7 +157,25 @@ across sessions.
 
 **Accessibility** — the pill is a real `<button>` with `aria-expanded`.
 
-## Data Flow
+## Export (`App.tsx`, `exportFeedbackAsMarkdown`)
+
+The export already rebuilds the transcript from `currentTranscript`. Reuse the
+same `userIndexByMessage` / `suggestionByUserIndex` mapping so each suggestion
+is interleaved **after** the reply it coaches, as a Markdown blockquote:
+
+```markdown
+**You:** Um, I just picked the faster one.
+
+> **💡 Suggested improvement**
+> **Why this fell short:** <critique>
+> **Stronger answer:** <modelAnswer>
+```
+
+Replies without a suggestion (and every reply when score ≥ 70, or for old
+history) export exactly as today. The exported coaching is plain Markdown — no
+collapse/expand, everything is visible. This is the one place suggestions leave
+the UI; expansion state does not affect what is exported (all suggestions are
+always written).
 
 1. Interview ends → `processInterviewResults(messages)` → `AppStage.FEEDBACK`,
    spinner shown.
@@ -185,10 +204,14 @@ across sessions.
 - Manual: run a deliberately weak interview, confirm score < 70 yields pills on
   the weakest replies, each expanding to critique + model answer; confirm a
   strong interview (≥ 70) shows none; confirm an old history entry shows none.
+- Manual: export a sub-70 interview and confirm each suggestion appears as a
+  blockquote after the correct reply; export a ≥ 70 interview and confirm the
+  export is unchanged from today.
 
 ## Backward Compatibility
 
 - `suggestions` optional → existing localStorage `HistoryEntry` records load and
-  render unchanged.
-- Markdown export untouched (suggestions are intentionally UI-only).
+  render unchanged, and export unchanged (no suggestions to interleave).
+- Markdown export reuses the same index mapping; replies without suggestions
+  export exactly as today.
 - No change to the live interview paths (voice/text).
