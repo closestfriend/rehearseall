@@ -76,6 +76,15 @@ Provide a structured feedback report in valid JSON:
 2. Key strengths demonstrated.
 3. Specific areas for improvement — only those genuinely relevant to the job.
 4. A detailed qualitative analysis weighing technical depth and role-relevant judgment.
+5. INLINE REPLY SUGGESTIONS (conditional):
+   If, and ONLY if, the overall score is below 70, identify the 3-4 user replies
+   that most hurt the result. For each, add an object to "suggestions" with:
+   - "replyIndex": the integer N copied from the matching "USER REPLY #N" line,
+   - "critique": one or two sentences on what was weak,
+   - "modelAnswer": a stronger version of that reply, calibrated to the target role.
+   If the score is 70 or above, return an empty "suggestions" array.
+   Apply the same ASR-artifact awareness: never coach against suspected
+   transcription noise.
 `;
 
 export const MODELS = {
