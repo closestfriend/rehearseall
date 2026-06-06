@@ -11,11 +11,18 @@ export interface InterviewMessage {
   timestamp: number;
 }
 
+export interface ReplySuggestion {
+  replyIndex: number;   // 0-based index over USER replies only, in order
+  critique: string;     // what was weak — one or two sentences
+  modelAnswer: string;  // a stronger version of the reply
+}
+
 export interface InterviewFeedback {
   score: number;
   strengths: string[];
   improvements: string[];
   detailedAnalysis: string;
+  suggestions?: ReplySuggestion[];   // present only when score < 70; may be empty
 }
 
 export interface HistoryEntry {
