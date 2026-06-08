@@ -497,7 +497,7 @@ ${transcriptMd}
                   Interviewed by <strong>{displayPersonaName}</strong>
                 </p>
               )}
-              <p className="text-xs text-gray-400 mt-2">Analyzed using Gemini 3 Pro Reasoning</p>
+              <p className="text-xs text-gray-400 mt-2">Analyzed using Gemini 3 Flash</p>
             </div>
           </div>
 
