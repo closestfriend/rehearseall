@@ -56,9 +56,9 @@ Interview history persists to localStorage under key `hireprep_history_v1`.
 
 The app uses three different Gemini models for different purposes:
 
-- **TEXT_CHEF**: `gemini-3-flash-preview` - Text-based chat interviews
-- **VOICE_INTERVIEWER**: `gemini-2.5-flash-native-audio-preview-09-2025` - Real-time voice with audio streaming
-- **EVALUATOR**: `gemini-3-pro-preview` - Generates feedback with structured JSON output
+- **TEXT_CHEF**: `gemini-2.5-flash` - Text-based chat interviews
+- **VOICE_INTERVIEWER**: `gemini-3.1-flash-live-preview` - Real-time voice with audio streaming
+- **EVALUATOR**: `gemini-3-flash-preview` - Generates feedback with structured JSON output
 
 ### Voice Interview Architecture (VoiceInterview.tsx)
 
@@ -91,6 +91,7 @@ Uses structured output with a JSON schema to ensure consistent feedback format:
 - `strengths` (array of strings)
 - `improvements` (array of strings)
 - `detailedAnalysis` (string)
+- `suggestions` (array; populated only when `score < 70`) — per-reply `{ replyIndex, critique, modelAnswer }` coaching on the weakest user answers, surfaced inline in the transcript and included in the Markdown export.
 
 The EVALUATOR model receives the full resume data and interview transcript.
 
