@@ -248,6 +248,19 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     <div className="max-w-xl mx-auto py-12 px-4">
       <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center relative overflow-hidden">
         <div className={`absolute top-0 left-0 w-full h-1 transition-all duration-500 ${status === 'speaking' ? 'bg-blue-500' : status === 'listening' ? 'bg-green-500' : 'bg-transparent'}`} />
+
+        {cameraOn && (
+          <div className="absolute top-4 right-4 w-32 h-24 rounded-2xl overflow-hidden border border-gray-200 shadow-lg bg-gray-900 z-10">
+            <video
+              ref={videoElRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }}
+            />
+          </div>
+        )}
         
         <div className="mb-10">
           <div className="relative inline-block">
@@ -308,6 +321,9 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
             {cameraOn ? 'Turn off camera' : 'Turn on camera'}
           </button>
         </div>
+        {cameraError && (
+          <p className="mt-3 text-xs text-gray-400">{cameraError}</p>
+        )}
       </div>
     </div>
   );
