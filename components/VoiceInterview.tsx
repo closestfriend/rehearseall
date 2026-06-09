@@ -16,6 +16,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   const [isConnecting, setIsConnecting] = useState(true);
   const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking' | 'idle'>('connecting');
   const [volume, setVolume] = useState(0);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   
   // High-level logs for the evaluation
   const transcriptionRef = useRef<string[]>([]);
@@ -27,6 +29,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   
   const audioCtxRef = useRef<{ input: AudioContext; output: AudioContext } | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
   const sessionRef = useRef<any>(null);
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
@@ -190,6 +194,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     return () => {
       sessionRef.current?.close();
       streamRef.current?.getTracks().forEach(t => t.stop());
+      videoStreamRef.current?.getTracks().forEach(t => t.stop());
       if (audioCtxRef.current) {
         audioCtxRef.current.input.close();
         audioCtxRef.current.output.close();
@@ -198,6 +203,32 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       // suppress StrictMode's double-mount, which reuses the same refs.
     };
   }, [startSession]);
+
+  useEffect(() => {
+    if (cameraOn && videoElRef.current && videoStreamRef.current) {
+      videoElRef.current.srcObject = videoStreamRef.current;
+    }
+  }, [cameraOn]);
+
+  const toggleCamera = useCallback(async () => {
+    if (cameraOn) {
+      videoStreamRef.current?.getTracks().forEach(t => t.stop());
+      videoStreamRef.current = null;
+      if (videoElRef.current) videoElRef.current.srcObject = null;
+      setCameraOn(false);
+      return;
+    }
+    try {
+      const vstream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      videoStreamRef.current = vstream;
+      setCameraError(null);
+      setCameraOn(true);
+    } catch (err) {
+      console.error("Failed to start camera:", err);
+      setCameraError("Camera unavailable");
+      setCameraOn(false);
+    }
+  }, [cameraOn]);
 
   const handleFinish = () => {
     flushBuffers(); // Final check
@@ -256,7 +287,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <button 
             onClick={onCancel}
             className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
@@ -269,6 +300,12 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
           >
             End Interview
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </button>
+          <button
+            onClick={toggleCamera}
+            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+          >
+            {cameraOn ? 'Turn off camera' : 'Turn on camera'}
           </button>
         </div>
       </div>
