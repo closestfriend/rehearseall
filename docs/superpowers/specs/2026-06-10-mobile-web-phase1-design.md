@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-10
 **Status:** Approved
-**Context:** Hunter wants to (1) practice interviews on the go ASAP and (2) eventually ship to both iOS and Android app stores. Decision made: phased approach — mobile-web pass now (this spec), Expo/React Native port later when shipping to stores gets real. Native Swift was ruled out (iOS-only, zero code reuse, two extra codebases for a solo developer). Hosting target: Vercel (Netlify as fallback).
+**Context:** Hunter wants to (1) practice interviews on the go ASAP and (2) eventually ship to both iOS and Android app stores. Decision made: **two parallel tracks** — this mobile-web pass (Track A, the fast practice loop) and an Expo prototype with voice as the centerpiece (Track B, see `2026-06-10-expo-mobile-prototype-design.md`). Native Swift was ruled out (iOS-only, zero code reuse, two extra codebases for a solo developer). Hosting target: Vercel (Netlify as fallback).
 
 ## Goal
 
@@ -11,7 +11,7 @@ Make the existing web app fully usable on a phone, deployed to Vercel. No React 
 ## Out of scope
 
 - PWA install / "Add to Home Screen" manifest (open in browser is fine for Phase 1)
-- Expo/React Native port (Phase 2, separate spec)
+- Expo/React Native work (Track B, separate spec running in parallel)
 - Ephemeral-token backend for API-key protection (first task of the shipping phase)
 - Visual redesign / de-templatizing pass
 
@@ -38,6 +38,8 @@ The recorder worklet currently assumes the input `AudioContext` runs at the requ
 **Stale-docs note:** project CLAUDE.md describes RMS silence-zeroing in the mic path, but neither `VoiceInterview.tsx` nor `lib/audioWorklet.ts` contains it — chunks are sent unconditionally. Sync the doc (or knowingly reintroduce the feature) as part of this work.
 
 ## 3. Responsive UI pass
+
+**Scope note (Track B in parallel):** this pass targets *usable*, not polished — the Expo app is the long-term mobile face. Keep changes to what's needed to comfortably complete interviews on a phone.
 
 - `index.html`: add `viewport-fit=cover` to the viewport meta; apply safe-area inset padding where edges are flush.
 - Use `dvh` (not `vh`) for full-height screens.
