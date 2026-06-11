@@ -21,6 +21,12 @@ npm run dev
 ```
 The app runs on `http://localhost:3000` (configured in vite.config.ts)
 
+**Run development server with HTTPS on LAN (for phone testing):**
+```bash
+npm run dev:phone
+```
+`getUserMedia` requires a secure context — plain `http://<lan-ip>` is refused by mobile browsers. This mode activates `@vitejs/plugin-basic-ssl` to serve self-signed HTTPS on all interfaces. Find the Mac's LAN IP with `ipconfig getifaddr en0`, then open `https://<mac-lan-ip>:3000` on the phone. iOS Safari will show "This connection is not private" — tap Show Details → "visit this website" to accept the cert. `strictPort` is on for this mode: if port 3000 is already taken the server fails loudly rather than silently bumping to another port.
+
 **Build for production:**
 ```bash
 npm run build
@@ -77,7 +83,10 @@ The voice interview component uses Gemini's Live API with bidirectional audio st
 - Interruption handling: stops all playing audio sources when user speaks
 - Transcription is collected asynchronously to avoid blocking audio pipeline
 - Volume visualization driven by RMS calculation from input samples
-- Enhanced audio capture with echo cancellation, noise suppression, and auto gain control
+- Audio capture: `echoCancellation: true`, `noiseSuppression: false`, `autoGainControl: false` — suppression and AGC are intentionally off to avoid degrading the audio Gemini receives
+- The recorder worklet resamples from the actual AudioContext rate to 16kHz (`lib/resample.ts`, embedded into the worklet string via `createResampler.toString()`; the function must stay self-contained — no imports, no outer-scope references, no backticks). iOS Safari ignores the requested 16kHz context rate and typically runs at 48kHz; the resampler keeps the Live API's `audio/pcm;rate=16000` contract true.
+- VoiceInterview shows a tap-to-begin overlay when AudioContexts start suspended (iOS autoplay policy) and resumes them inside the user gesture (`handleBeginTap`).
+- A screen wake lock is held during voice interviews (`navigator.wakeLock.request('screen')`), re-acquired on tab re-focus via `visibilitychange`, no-op where unsupported.
 - Initialization guard (`isInitializedRef`) prevents duplicate session creation in React strict mode
 
 ### Text Interview Architecture (InterviewChat.tsx)
@@ -124,3 +133,11 @@ Design/plan: `docs/superpowers/specs/2026-06-02-randomized-interviewer-personas-
 - Web Audio API for voice processing
 - Tailwind CSS classes for styling (utility-first approach)
 - LocalStorage for persistence
+
+## Deployment
+
+- **Vercel project**: `hireprep-ai` — linked via `.vercel/` (gitignored).
+- **GitHub repo**: `closestfriend/hireprep-ai` — connected for auto-deploys: `main` → production, branches → preview deployments.
+- **Production alias**: https://hireprep-ai-nine.vercel.app
+- **Environment variable**: `VITE_GEMINI_API_KEY` is set in Vercel for all three environments (production, preview, development).
+- The API key ships in the client bundle — acceptable for personal use. Moving to an ephemeral-token backend is the first task of the shipping phase (see `docs/superpowers/specs/2026-06-10-mobile-web-phase1-design.md` §5).
