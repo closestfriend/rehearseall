@@ -35,6 +35,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isInitializedRef = useRef(false);
+  const [needsGesture, setNeedsGesture] = useState(false);
+  const gestureResolveRef = useRef<(() => void) | null>(null);
 
   const decode = (base64: string) => {
     const binaryString = atob(base64);
@@ -89,6 +91,13 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       const inCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       audioCtxRef.current = { input: inCtx, output: outCtx };
+
+      // iOS autoplay policy: contexts may start suspended. Block here until the
+      // user taps the overlay, whose handler resumes them inside the gesture.
+      if (inCtx.state === 'suspended' || outCtx.state === 'suspended') {
+        setNeedsGesture(true);
+        await new Promise<void>((resolve) => { gestureResolveRef.current = resolve; });
+      }
 
       const blob = new Blob([audioWorkletCode], { type: 'application/javascript' });
       const workletUrl = URL.createObjectURL(blob);
@@ -198,17 +207,61 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       if (audioCtxRef.current) {
         audioCtxRef.current.input.close();
         audioCtxRef.current.output.close();
+        audioCtxRef.current = null;
       }
       // Intentionally NOT resetting isInitializedRef — the guard exists to
       // suppress StrictMode's double-mount, which reuses the same refs.
     };
   }, [startSession]);
 
+  // Keep the screen on during the interview; re-acquire when the tab
+  // regains visibility (the lock is auto-released on backgrounding).
+  useEffect(() => {
+    let lock: any = null;
+    let done = false;
+    const acquire = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          const l = await (navigator as any).wakeLock.request('screen');
+          if (done) { l.release().catch(() => {}); return; }
+          lock = l;
+        }
+      } catch {
+        // Unsupported or denied — non-fatal, interview proceeds.
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !done) acquire();
+    };
+    acquire();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      done = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      lock?.release().catch(() => {});
+    };
+  }, []);
+
   useEffect(() => {
     if (cameraOn && videoElRef.current && videoStreamRef.current) {
       videoElRef.current.srcObject = videoStreamRef.current;
     }
   }, [cameraOn]);
+
+  const handleBeginTap = useCallback(async () => {
+    const ctxs = audioCtxRef.current;
+    try {
+      if (ctxs && ctxs.input.state !== 'closed' && ctxs.output.state !== 'closed') {
+        await Promise.all([ctxs.input.resume(), ctxs.output.resume()]);
+      }
+    } catch (err) {
+      console.error('Failed to resume audio contexts:', err);
+    } finally {
+      setNeedsGesture(false);
+      gestureResolveRef.current?.();
+      gestureResolveRef.current = null;
+    }
+  }, []);
 
   const toggleCamera = useCallback(async () => {
     if (cameraOn) {
@@ -245,8 +298,21 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   };
 
   return (
-    <div className="max-w-xl mx-auto py-12 px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center relative overflow-hidden">
+    <div className="max-w-xl mx-auto py-4 sm:py-12 px-4">
+      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-10 text-center relative overflow-hidden">
+        {needsGesture && (
+          <div className="absolute inset-0 z-20 bg-white/95 flex flex-col items-center justify-center gap-4 rounded-3xl">
+            <p className="text-gray-600 font-medium px-8 text-center">
+              Your browser needs a tap to enable audio.
+            </p>
+            <button
+              onClick={handleBeginTap}
+              className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg shadow-lg shadow-blue-200"
+            >
+              Tap to begin
+            </button>
+          </div>
+        )}
         <div className={`absolute top-0 left-0 w-full h-1 transition-all duration-500 ${status === 'speaking' ? 'bg-blue-500' : status === 'listening' ? 'bg-green-500' : 'bg-transparent'}`} />
 
         {cameraOn && (
@@ -291,7 +357,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
               <span className={`w-2 h-2 rounded-full mr-2 ${status === 'listening' ? 'bg-green-500 animate-pulse' : status === 'speaking' ? 'bg-blue-500' : 'bg-gray-400'}`} />
               {status}
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
               {isConnecting ? "Initializing AI..." : status === 'speaking' ? "Interviewer is Speaking" : "Listening to You..."}
             </h2>
             <p className="text-gray-500 max-w-sm mx-auto">
@@ -300,23 +366,23 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <button 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-[env(safe-area-inset-bottom)]">
+          <button
             onClick={onCancel}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-2 sm:order-none"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleFinish}
-            className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center justify-center gap-2"
+            className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center justify-center gap-2 order-1 sm:order-none"
           >
             End Interview
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </button>
           <button
             onClick={toggleCamera}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-3 sm:order-none"
           >
             {cameraOn ? 'Turn off camera' : 'Turn on camera'}
           </button>
