@@ -35,6 +35,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isInitializedRef = useRef(false);
+  const [needsGesture, setNeedsGesture] = useState(false);
+  const gestureResolveRef = useRef<(() => void) | null>(null);
 
   const decode = (base64: string) => {
     const binaryString = atob(base64);
@@ -89,6 +91,13 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       const inCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       audioCtxRef.current = { input: inCtx, output: outCtx };
+
+      // iOS autoplay policy: contexts may start suspended. Block here until the
+      // user taps the overlay, whose handler resumes them inside the gesture.
+      if (inCtx.state === 'suspended' || outCtx.state === 'suspended') {
+        setNeedsGesture(true);
+        await new Promise<void>((resolve) => { gestureResolveRef.current = resolve; });
+      }
 
       const blob = new Blob([audioWorkletCode], { type: 'application/javascript' });
       const workletUrl = URL.createObjectURL(blob);
@@ -204,11 +213,47 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     };
   }, [startSession]);
 
+  // Keep the screen on during the interview; re-acquire when the tab
+  // regains visibility (the lock is auto-released on backgrounding).
+  useEffect(() => {
+    let lock: any = null;
+    let done = false;
+    const acquire = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          lock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch {
+        // Unsupported or denied — non-fatal, interview proceeds.
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !done) acquire();
+    };
+    acquire();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      done = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      lock?.release().catch(() => {});
+    };
+  }, []);
+
   useEffect(() => {
     if (cameraOn && videoElRef.current && videoStreamRef.current) {
       videoElRef.current.srcObject = videoStreamRef.current;
     }
   }, [cameraOn]);
+
+  const handleBeginTap = useCallback(async () => {
+    const ctxs = audioCtxRef.current;
+    if (ctxs) {
+      await Promise.all([ctxs.input.resume(), ctxs.output.resume()]);
+    }
+    setNeedsGesture(false);
+    gestureResolveRef.current?.();
+    gestureResolveRef.current = null;
+  }, []);
 
   const toggleCamera = useCallback(async () => {
     if (cameraOn) {
@@ -247,6 +292,19 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   return (
     <div className="max-w-xl mx-auto py-12 px-4">
       <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center relative overflow-hidden">
+        {needsGesture && (
+          <div className="absolute inset-0 z-20 bg-white/95 flex flex-col items-center justify-center gap-4 rounded-3xl">
+            <p className="text-gray-600 font-medium px-8 text-center">
+              Your browser needs a tap to enable audio.
+            </p>
+            <button
+              onClick={handleBeginTap}
+              className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg shadow-lg shadow-blue-200"
+            >
+              Tap to begin
+            </button>
+          </div>
+        )}
         <div className={`absolute top-0 left-0 w-full h-1 transition-all duration-500 ${status === 'speaking' ? 'bg-blue-500' : status === 'listening' ? 'bg-green-500' : 'bg-transparent'}`} />
 
         {cameraOn && (
