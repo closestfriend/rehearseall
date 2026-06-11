@@ -29,9 +29,11 @@ export function createResampler(
       }
       pos += step;
     }
-    pos -= input.length;
-    carry = input[input.length - 1];
-    hasCarry = true;
+    if (input.length > 0) {
+      pos -= input.length;
+      carry = input[input.length - 1];
+      hasCarry = true;
+    }
     return Float32Array.from(out);
   };
 }
