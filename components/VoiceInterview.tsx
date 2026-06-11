@@ -298,8 +298,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   };
 
   return (
-    <div className="max-w-xl mx-auto py-12 px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center relative overflow-hidden">
+    <div className="max-w-xl mx-auto py-4 sm:py-12 px-4">
+      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-10 text-center relative overflow-hidden">
         {needsGesture && (
           <div className="absolute inset-0 z-20 bg-white/95 flex flex-col items-center justify-center gap-4 rounded-3xl">
             <p className="text-gray-600 font-medium px-8 text-center">
@@ -357,7 +357,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
               <span className={`w-2 h-2 rounded-full mr-2 ${status === 'listening' ? 'bg-green-500 animate-pulse' : status === 'speaking' ? 'bg-blue-500' : 'bg-gray-400'}`} />
               {status}
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
               {isConnecting ? "Initializing AI..." : status === 'speaking' ? "Interviewer is Speaking" : "Listening to You..."}
             </h2>
             <p className="text-gray-500 max-w-sm mx-auto">
@@ -366,23 +366,23 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <button 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-[env(safe-area-inset-bottom)]">
+          <button
             onClick={onCancel}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-2 sm:order-none"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleFinish}
-            className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center justify-center gap-2"
+            className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center justify-center gap-2 order-1 sm:order-none"
           >
             End Interview
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </button>
           <button
             onClick={toggleCamera}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-3 sm:order-none"
           >
             {cameraOn ? 'Turn off camera' : 'Turn on camera'}
           </button>

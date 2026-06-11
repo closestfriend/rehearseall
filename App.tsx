@@ -296,7 +296,7 @@ ${transcriptMd}
   );
 
   const renderResumeUpload = () => (
-    <div className="max-w-3xl mx-auto py-16 px-4">
+    <div className="max-w-3xl mx-auto py-6 sm:py-16 px-4">
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 lg:p-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Setup Your Interview</h2>
         <form onSubmit={handleResumeSubmit} className="space-y-8">
@@ -305,7 +305,7 @@ ${transcriptMd}
             <input 
               required
               placeholder="e.g. Senior Frontend Engineer"
-              className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+              className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-base"
               value={resumeData.role}
               onChange={(e) => setResumeData({...resumeData, role: e.target.value})}
             />
@@ -391,7 +391,7 @@ ${transcriptMd}
               required={!uploadedFile}
               disabled={!!uploadedFile}
               placeholder="Paste your resume details, skills, and work history here..."
-              className={`w-full h-64 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none ${uploadedFile ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
+              className={`w-full h-40 sm:h-64 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none text-base ${uploadedFile ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
               value={resumeData.text}
               onChange={(e) => setResumeData({...resumeData, text: e.target.value})}
             />

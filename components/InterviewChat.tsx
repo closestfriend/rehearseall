@@ -83,7 +83,7 @@ const InterviewChat: React.FC<InterviewChatProps> = ({ resume, persona, onFinish
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 h-[calc(100vh-12rem)] flex flex-col">
+    <div className="max-w-4xl mx-auto py-2 sm:py-8 px-2 sm:px-4 h-[calc(100dvh-10rem)] sm:h-[calc(100dvh-12rem)] flex flex-col">
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex-grow overflow-hidden flex flex-col">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -103,7 +103,7 @@ const InterviewChat: React.FC<InterviewChatProps> = ({ resume, persona, onFinish
           </button>
         </div>
 
-        <div ref={scrollRef} className="flex-grow overflow-y-auto p-6 space-y-6">
+        <div ref={scrollRef} className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-2xl p-4 ${
@@ -129,13 +129,13 @@ const InterviewChat: React.FC<InterviewChatProps> = ({ resume, persona, onFinish
           )}
         </div>
 
-        <form onSubmit={handleSend} className="p-4 border-t border-gray-100 bg-white">
+        <form onSubmit={handleSend} className="p-4 border-t border-gray-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
-            <input 
+            <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your response..."
-              className="flex-grow px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+              className="flex-grow px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-base"
             />
             <button 
               type="submit"
