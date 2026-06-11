@@ -37,6 +37,15 @@ describe('recorder worklet', () => {
     expect(posted[0].length).toBe(512);
   });
 
+  it('downsamples at a fractional ratio (44.1kHz context)', () => {
+    const { processor, posted } = instantiate(44100);
+    const frame = Float32Array.from({ length: 128 }, () => 0.25);
+    for (let i = 0; i < 100; i++) processor.process([[frame]]);
+    // 12800 samples / 2.75625 ≈ 4644 outputs -> 9 full chunks of 512
+    expect(posted.length).toBe(9);
+    for (const chunk of posted) expect(chunk.length).toBe(512);
+  });
+
   it('keeps running when the input is empty', () => {
     const { processor } = instantiate(48000);
     expect(processor.process([[]])).toBe(true);
