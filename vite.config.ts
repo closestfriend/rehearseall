@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        // lan-https: the phone types this exact port — fail loudly instead of silently bumping
+        strictPort: mode === 'lan-https',
       },
       plugins: [
         ...(mode === 'lan-https' ? [basicSsl()] : []),
