@@ -207,6 +207,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       if (audioCtxRef.current) {
         audioCtxRef.current.input.close();
         audioCtxRef.current.output.close();
+        audioCtxRef.current = null;
       }
       // Intentionally NOT resetting isInitializedRef — the guard exists to
       // suppress StrictMode's double-mount, which reuses the same refs.
@@ -221,7 +222,9 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     const acquire = async () => {
       try {
         if ('wakeLock' in navigator) {
-          lock = await (navigator as any).wakeLock.request('screen');
+          const l = await (navigator as any).wakeLock.request('screen');
+          if (done) { l.release().catch(() => {}); return; }
+          lock = l;
         }
       } catch {
         // Unsupported or denied — non-fatal, interview proceeds.
@@ -247,12 +250,17 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
 
   const handleBeginTap = useCallback(async () => {
     const ctxs = audioCtxRef.current;
-    if (ctxs) {
-      await Promise.all([ctxs.input.resume(), ctxs.output.resume()]);
+    try {
+      if (ctxs && ctxs.input.state !== 'closed' && ctxs.output.state !== 'closed') {
+        await Promise.all([ctxs.input.resume(), ctxs.output.resume()]);
+      }
+    } catch (err) {
+      console.error('Failed to resume audio contexts:', err);
+    } finally {
+      setNeedsGesture(false);
+      gestureResolveRef.current?.();
+      gestureResolveRef.current = null;
     }
-    setNeedsGesture(false);
-    gestureResolveRef.current?.();
-    gestureResolveRef.current = null;
   }, []);
 
   const toggleCamera = useCallback(async () => {
