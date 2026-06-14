@@ -10,7 +10,7 @@
 | Track | What | State | Backed up? |
 |---|---|---|---|
 | **A — Mobile web** | Harden the existing Vite/React app for phones; deploy to Vercel | **Shipped & live**, pending one human device test | ✅ GitHub `closestfriend/hireprep-ai` |
-| **B — Expo native** | New native iOS/Android app, voice-first | **M0 audio spike built**, blocked on a tooling gap (full Xcode) | ⚠️ **local-only — not pushed anywhere** |
+| **B — Expo native** | New native iOS/Android app, voice-first | **M0 audio spike built**, blocked on a tooling gap (full Xcode) | ✅ GitHub `closestfriend/hireprep-mobile` (private) |
 
 **Live web app:** https://hireprep-ai-nine.vercel.app (any modern mobile browser; on iOS all browsers are WebKit so behavior matches Safari).
 
@@ -63,7 +63,7 @@ Full reasoning: `specs/2026-06-10-mobile-web-phase1-design.md` and `specs/2026-0
 
 ## Track B — Expo native (M0 SPIKE BUILT, BLOCKED ON TOOLING)
 
-**Location:** `hire-prep/hireprep-mobile/` — its own git repo, Expo SDK 56 + TypeScript. **5 commits, head `991d973`, local-only (no remote).**
+**Location:** `hire-prep/hireprep-mobile/` — its own git repo, Expo SDK 56 + TypeScript. Pushed to GitHub `closestfriend/hireprep-mobile` (private; no Vercel/CI wired — it's a native app).
 
 The build order is deliberate: **Milestone 0 is a prove-or-kill spike of the realtime audio pipeline before any app shell is built around it**, because the audio layer is the single biggest risk in the whole port.
 
@@ -89,8 +89,8 @@ This Mac has **only Command Line Tools** (`/Library/Developer/CommandLineTools`)
 
 Full step-by-step: `plans/2026-06-10-expo-mobile-prototype.md` (Milestones 0/1/2).
 
-### ⚠️ Backup gap
-`hireprep-mobile` has **no git remote** — all Track B work exists only on this disk. Recommend creating a private GitHub repo and pushing before investing more (the web app is already at `closestfriend/hireprep-ai`). Not done automatically since it creates a new external artifact; say the word and I'll create + push it.
+### Backup
+Resolved (2026-06-14): pushed to private GitHub repo `closestfriend/hireprep-mobile`. No CI/deploy wired — it's a native app, distributed via dev builds / TestFlight, not a web host.
 
 ---
 
@@ -108,7 +108,7 @@ Full step-by-step: `plans/2026-06-10-expo-mobile-prototype.md` (Milestones 0/1/2
 **Track B — bring iOS tooling online** (one-time, then the spike is minutes away):
 - [ ] Install full Xcode + `xcode-select -s` to it.
 - [ ] Apple ID in Xcode Accounts; iPhone trusted + Developer Mode on.
-- [ ] (Recommended) Create + push a private GitHub repo for `hireprep-mobile`.
+- [x] ~~Create + push a private GitHub repo for `hireprep-mobile`~~ — done 2026-06-14 (`closestfriend/hireprep-mobile`).
 
 ---
 
