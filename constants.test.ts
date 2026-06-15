@@ -71,6 +71,21 @@ describe('buildInterviewerSystemInstruction', () => {
     expect(out).toContain(RESUME.experienceLevel);
   });
 
+  it('omits the job-description block when none is provided', () => {
+    // RESUME has no jobDescription
+    expect(out).not.toContain('Job Description');
+  });
+
+  it('includes the job description block when one is provided', () => {
+    const withJd = buildInterviewerSystemInstruction(
+      { ...RESUME, jobDescription: '  Build React dashboards in TypeScript.  ' },
+      skeptic
+    );
+    expect(withJd).toContain('Job Description (tailor your questions to this):');
+    // trimmed, exact text present
+    expect(withJd).toContain('Build React dashboards in TypeScript.');
+  });
+
   it('does not hardcode STAR in the core (only personas may use it)', () => {
     const core = out.split('PERSONA —')[0];
     expect(core).not.toContain('STAR');

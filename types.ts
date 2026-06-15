@@ -3,6 +3,7 @@ export interface ResumeData {
   text: string;
   role: string;
   experienceLevel: string;
+  jobDescription?: string;
 }
 
 export interface InterviewMessage {
