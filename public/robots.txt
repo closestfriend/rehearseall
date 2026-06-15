@@ -1,0 +1,10 @@
+# ⚠️ TEMPORARY — pre-public-launch crawl block.
+#
+# Why: the Gemini API key is currently compiled into the client bundle
+# (VITE_GEMINI_API_KEY), so the site is deliberately kept out of search
+# indexes until that's fixed. See docs/PRE-LAUNCH-CHECKLIST.md.
+#
+# REMOVE or relax this (and the noindex <meta> in index.html) before public
+# launch. Symptom if forgotten: zero organic search traffic.
+User-agent: *
+Disallow: /
