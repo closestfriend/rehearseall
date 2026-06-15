@@ -63,7 +63,7 @@ Full reasoning: `specs/2026-06-10-mobile-web-phase1-design.md` and `specs/2026-0
 
 ## Track B — Expo native (M0 SPIKE BUILT, BLOCKED ON TOOLING)
 
-**Location:** `hire-prep/hireprep-mobile/` — its own git repo, Expo SDK 56 + TypeScript. Pushed to GitHub `closestfriend/hireprep-mobile` (private; no Vercel/CI wired — it's a native app).
+**Location:** `/Volumes/2025_exSSD_2tb/hire-prep-iterations/hire-prep/hireprep-mobile/` (external drive — the mobile port did *not* move to local disk with the web app) — its own git repo, Expo SDK 56 + TypeScript. Pushed to GitHub `closestfriend/hireprep-mobile` (private; no Vercel/CI wired — it's a native app).
 
 The build order is deliberate: **Milestone 0 is a prove-or-kill spike of the realtime audio pipeline before any app shell is built around it**, because the audio layer is the single biggest risk in the whole port.
 
@@ -122,5 +122,5 @@ Resolved (2026-06-14): pushed to private GitHub repo `closestfriend/hireprep-mob
 | `plans/2026-06-10-expo-mobile-prototype.md` | Track B step-by-step (11 tasks) |
 | **this file** | **as-built status + how to resume** |
 | `hireprep-ai/CLAUDE.md` | web app internals (synced with the mobile changes) |
-| `hireprep-mobile/CLAUDE.md` | native app internals |
-| `../../../CLAUDE.md` (workspace) | the five-sibling map, now including `hireprep-mobile` |
+| `hireprep-mobile/CLAUDE.md` (external drive) | native app internals |
+| `/Volumes/2025_exSSD_2tb/hire-prep-iterations/CLAUDE.md` (workspace, external drive) | the five-sibling map, now including `hireprep-mobile` |
