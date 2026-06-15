@@ -27,6 +27,10 @@ export function buildInterviewerSystemInstruction(
   resume: ResumeData,
   persona: InterviewerPersona
 ): string {
+  const jd = resume.jobDescription?.trim();
+  const jdBlock = jd
+    ? `\n\nJob Description (tailor your questions to this):\n${jd}`
+    : '';
   return `${INTERVIEWER_CORE}
 
 PERSONA — ${persona.name}:
@@ -34,7 +38,7 @@ ${persona.fragment}
 
 Candidate Resume: ${resume.text}
 Target Role: ${resume.role}
-Level: ${resume.experienceLevel}`;
+Level: ${resume.experienceLevel}${jdBlock}`;
 }
 
 export const SYSTEM_INSTRUCTION_FEEDBACK = `
