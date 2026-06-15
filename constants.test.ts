@@ -106,4 +106,9 @@ describe('SYSTEM_INSTRUCTION_FEEDBACK', () => {
     expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('replyIndex');
     expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('USER REPLY');
   });
+
+  it('weights role-fit to the job description when one is provided', () => {
+    expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('JOB DESCRIPTION');
+    expect(SYSTEM_INSTRUCTION_FEEDBACK.toLowerCase()).toContain('requirements');
+  });
 });
