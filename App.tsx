@@ -16,7 +16,8 @@ const App: React.FC = () => {
   const [resumeData, setResumeData] = useState<ResumeData>({
     text: '',
     role: '',
-    experienceLevel: 'mid'
+    experienceLevel: 'mid',
+    jobDescription: ''
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [resumeParseState, setResumeParseState] = useState<'idle' | 'parsing' | 'error'>('idle');
@@ -108,6 +109,8 @@ const App: React.FC = () => {
   const handleResumeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (resumeData.text && resumeData.role) {
+      const jd = resumeData.jobDescription?.trim();
+      setResumeData({ ...resumeData, jobDescription: jd || undefined });
       setStage(AppStage.INTERVIEW_MODE);
     }
   };
@@ -329,6 +332,18 @@ ${transcriptMd}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Job Description (optional)
+            </label>
+            <textarea
+              placeholder="Paste the full job description to tailor the interview…"
+              className="w-full h-32 sm:h-40 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none text-base"
+              value={resumeData.jobDescription ?? ''}
+              onChange={(e) => setResumeData({...resumeData, jobDescription: e.target.value})}
+            />
           </div>
 
           <div>
