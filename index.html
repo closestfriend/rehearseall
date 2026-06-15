@@ -4,6 +4,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--
+      ⚠️ TEMPORARY noindex — blocks ALL search indexing on purpose.
+      Reason: the Gemini API key is currently exposed in the client bundle, so
+      the site is kept un-discoverable until that's fixed (see docs/PRE-LAUNCH-CHECKLIST.md).
+      REMOVE this tag (and public/robots.txt) before public launch.
+      Symptom if you forget: the site gets zero organic search traffic and you
+      cry yourself to sleep wondering why.
+    -->
+    <meta name="robots" content="noindex, nofollow" />
     <title>HirePrep AI - Interview Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
