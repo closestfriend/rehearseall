@@ -89,6 +89,14 @@ This Mac has **only Command Line Tools** (`/Library/Developer/CommandLineTools`)
 
 Full step-by-step: `plans/2026-06-10-expo-mobile-prototype.md` (Milestones 0/1/2).
 
+> **M1 note — web setup form gained an optional Job Description field (2026-06-14).**
+> The web app's setup now accepts a pasted JD that tailors both the interviewer's
+> questions and the evaluator's scoring (spec: `specs/2026-06-14-job-description-input-design.md`).
+> When M1 builds the native setup/resume screen, include it: it's `jobDescription?: string`
+> on the copied `ResumeData`, the JD blocks already in the (copied) `constants.ts` +
+> `lib/evaluatorPrompt.ts`, and one `<TextInput>`. Logic is copied not shared, so copy
+> those now-JD-aware files over wholesale and the feature rides along.
+
 ### Backup
 Resolved (2026-06-14): pushed to private GitHub repo `closestfriend/hireprep-mobile`. No CI/deploy wired — it's a native app, distributed via dev builds / TestFlight, not a web host.
 
