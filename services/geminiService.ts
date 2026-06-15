@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from "../constants";
 import { InterviewFeedback, ResumeData, InterviewMessage } from "../types";
 import { formatTranscriptForEvaluator } from "../lib/transcriptFormat";
+import { buildEvaluatorPrompt } from "../lib/evaluatorPrompt";
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -13,15 +14,8 @@ export class GeminiService {
 
   async generateFeedback(resume: ResumeData, transcript: InterviewMessage[]): Promise<InterviewFeedback> {
     const chatTranscript = formatTranscriptForEvaluator(transcript);
-    
-    const prompt = `
-      RESUME: ${resume.text}
-      TARGET ROLE: ${resume.role}
-      EXPERIENCE: ${resume.experienceLevel}
-      
-      INTERVIEW TRANSCRIPT:
-      ${chatTranscript}
-    `;
+
+    const prompt = buildEvaluatorPrompt(resume, chatTranscript);
 
     const response = await this.ai.models.generateContent({
       model: MODELS.EVALUATOR,
