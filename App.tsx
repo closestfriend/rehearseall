@@ -72,6 +72,18 @@ const App: React.FC = () => {
     setStage(AppStage.RESUME_UPLOAD);
   };
 
+  // Relaunch a new interview attempt reusing a past setup. With an `entry`,
+  // pulls its resume/role/JD into the form (history card path); without one,
+  // resumeData already reflects the report on screen (feedback screen path).
+  const startPracticeAgain = (entry?: HistoryEntry) => {
+    if (entry) setResumeData(entry.resume);
+    setFeedback(null);
+    setUploadedFile(null);
+    setResumeParseState('idle');
+    setExpandedSuggestions(new Set());
+    setStage(AppStage.RESUME_UPLOAD);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -257,8 +269,17 @@ ${transcriptMd}
                   <span className="px-2 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{entry.resume.experienceLevel}</span>
                   <span className="px-2 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{entry.transcript.length} Messages</span>
                 </div>
-                <div className="text-blue-600 text-sm font-bold flex items-center gap-1">
-                  View Full Report <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                <div className="flex items-center justify-between">
+                  <div className="text-blue-600 text-sm font-bold flex items-center gap-1">
+                    View Full Report <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); startPracticeAgain(entry); }}
+                    className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
+                  >
+                    Practice Again
+                  </button>
                 </div>
               </div>
             ))}
@@ -625,6 +646,13 @@ ${transcriptMd}
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
+            <button
+              onClick={() => startPracticeAgain()}
+              className="px-10 py-4 border border-gray-300 text-gray-700 rounded-full font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Practice Again
+            </button>
             <button
               onClick={exportFeedbackAsMarkdown}
               className="px-10 py-4 border border-gray-300 text-gray-700 rounded-full font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
