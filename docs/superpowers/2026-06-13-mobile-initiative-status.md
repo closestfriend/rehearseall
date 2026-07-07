@@ -131,4 +131,4 @@ Resolved (2026-06-14): pushed to private GitHub repo `closestfriend/hireprep-mob
 | **this file** | **as-built status + how to resume** |
 | `hireprep-ai/CLAUDE.md` | web app internals (synced with the mobile changes) |
 | `hireprep-mobile/CLAUDE.md` (external drive) | native app internals |
-| `/Volumes/2025_exSSD_2tb/hire-prep-iterations/CLAUDE.md` (workspace, external drive) | the five-sibling map, now including `hireprep-mobile` |
+| `/Volumes/2025_exSSD_2tb/hire-prep-iterations/CLAUDE.md` (workspace, external drive) | the sibling-project map (web app now lives at `~/Projects/hireprep-ai`; `hireprep-mobile` stayed on the drive) |
