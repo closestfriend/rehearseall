@@ -94,9 +94,9 @@ Provide a structured feedback report in valid JSON:
 `;
 
 export const MODELS = {
-  TEXT_CHEF: 'gemini-2.5-flash',
+  TEXT_CHEF: 'gemini-3.5-flash',
   VOICE_INTERVIEWER: 'gemini-3.1-flash-live-preview',
-  EVALUATOR: 'gemini-3-flash-preview'
+  EVALUATOR: 'gemini-3.5-flash'
 };
 
 export const INTERVIEWER_VOICES: { id: string; label: string; description: string }[] = [
