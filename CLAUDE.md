@@ -62,9 +62,9 @@ Interview history persists to localStorage under key `hireprep_history_v1`.
 
 The app uses three different Gemini models for different purposes:
 
-- **TEXT_CHEF**: `gemini-2.5-flash` - Text-based chat interviews
-- **VOICE_INTERVIEWER**: `gemini-3.1-flash-live-preview` - Real-time voice with audio streaming
-- **EVALUATOR**: `gemini-3-flash-preview` - Generates feedback with structured JSON output
+- **TEXT_CHEF**: `gemini-3.5-flash` - Text-based chat interviews (moved off `gemini-2.5-flash` 2026-07-06; that model has an announced Oct 16, 2026 shutdown with `gemini-3.5-flash` as Google's designated GA replacement)
+- **VOICE_INTERVIEWER**: `gemini-3.1-flash-live-preview` - Real-time voice with audio streaming (stays on preview — the entire Gemini Live API is still pre-GA; no GA alternative exists for realtime audio-to-audio as of 2026-07-06)
+- **EVALUATOR**: `gemini-3.5-flash` - Generates feedback with structured JSON output (moved off the preview `gemini-3-flash-preview` 2026-07-06, per Google's own migration guidance)
 
 ### Voice Interview Architecture (VoiceInterview.tsx)
 
