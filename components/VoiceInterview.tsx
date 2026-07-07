@@ -4,6 +4,7 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { MODELS, buildInterviewerSystemInstruction, InterviewerPersona } from '../constants';
 import { ResumeData } from '../types';
 import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
+import { parseLiveSessionSignal } from '../lib/liveSessionSignals';
 
 interface VoiceInterviewProps {
   resume: ResumeData;
@@ -35,6 +36,16 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isInitializedRef = useRef(false);
+  // Gemini Live sessions have a max duration; the server sends a `goAway`
+  // warning before force-closing (code 1008). These track the reconnect
+  // dance: latest resumable handle, the in-flight session promise (so the
+  // mic-audio sender always targets the current socket, not a stale one),
+  // whether a deliberate reconnect is underway (to ignore the expected
+  // onclose it triggers), and whether we've unmounted (to abort mid-flight).
+  const resumeHandleRef = useRef<string | undefined>(undefined);
+  const sessionPromiseRef = useRef<Promise<any> | null>(null);
+  const isReconnectingRef = useRef(false);
+  const isUnmountedRef = useRef(false);
   const [needsGesture, setNeedsGesture] = useState(false);
   const gestureResolveRef = useRef<(() => void) | null>(null);
 
@@ -109,77 +120,112 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       source.connect(workletNode);
       workletNode.connect(inCtx.destination);
 
-      const sessionPromise = ai.live.connect({
-        model: MODELS.VOICE_INTERVIEWER,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceId } }
+      // Reconnectable: called on first connect and again on `goAway`, always
+      // via sessionPromiseRef so the mic-audio sender below never targets a
+      // closed socket. `resumeHandle` opts into Live's session-resumption
+      // mechanism — passing `{}` (not omitting the field) is required even on
+      // the very first connect, since that's what makes the server start
+      // sending back the resumption handles we'll need later.
+      const connectLive = (resumeHandle?: string): Promise<any> => {
+        return ai.live.connect({
+          model: MODELS.VOICE_INTERVIEWER,
+          config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceId } }
+            },
+            systemInstruction: buildInterviewerSystemInstruction(resume, persona),
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
+            sessionResumption: resumeHandle ? { handle: resumeHandle } : {}
           },
-          systemInstruction: buildInterviewerSystemInstruction(resume, persona),
-          inputAudioTranscription: {},
-          outputAudioTranscription: {}
-        },
-        callbacks: {
-          onopen: () => {
-            setIsConnecting(false);
-            setStatus('listening');
-          },
-          onmessage: async (message) => {
-            // 1. PROCESS AUDIO (PRIORITY - ZERO LAG)
-            if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
-              setStatus('speaking');
-              const base64 = message.serverContent.modelTurn.parts[0].inlineData.data;
-              const bytes = decode(base64);
-              const buffer = await decodeAudioData(bytes, outCtx);
-              const source = outCtx.createBufferSource();
-              source.buffer = buffer;
-              source.connect(outCtx.destination);
-              
-              const startAt = Math.max(nextStartTimeRef.current, outCtx.currentTime);
-              source.start(startAt);
-              nextStartTimeRef.current = startAt + buffer.duration;
-              sourcesRef.current.add(source);
-              
-              source.onended = () => {
-                sourcesRef.current.delete(source);
-                if (sourcesRef.current.size === 0) {
-                  setStatus('listening');
-                }
-              };
-            }
-
-            // Handle interruption (e.g. user starts talking over the AI)
-            if (message.serverContent?.interrupted) {
-              sourcesRef.current.forEach(s => s.stop());
-              sourcesRef.current.clear();
-              nextStartTimeRef.current = 0;
+          callbacks: {
+            onopen: () => {
+              setIsConnecting(false);
               setStatus('listening');
-            }
+            },
+            onmessage: async (message) => {
+              // 1. PROCESS AUDIO (PRIORITY - ZERO LAG)
+              if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
+                setStatus('speaking');
+                const base64 = message.serverContent.modelTurn.parts[0].inlineData.data;
+                const bytes = decode(base64);
+                const buffer = await decodeAudioData(bytes, outCtx);
+                const source = outCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(outCtx.destination);
 
-            // 2. PROCESS TEXT (BACKGROUND - NO LAG IMPACT)
-            if (message.serverContent?.inputTranscription?.text) {
-               currentInputBuffer.current += message.serverContent.inputTranscription.text;
-            }
-            if (message.serverContent?.outputTranscription?.text) {
-               currentOutputBuffer.current += message.serverContent.outputTranscription.text;
-            }
+                const startAt = Math.max(nextStartTimeRef.current, outCtx.currentTime);
+                source.start(startAt);
+                nextStartTimeRef.current = startAt + buffer.duration;
+                sourcesRef.current.add(source);
 
-            // Box up the text segments when the turn is complete
-            if (message.serverContent?.turnComplete) {
-              flushBuffers();
+                source.onended = () => {
+                  sourcesRef.current.delete(source);
+                  if (sourcesRef.current.size === 0) {
+                    setStatus('listening');
+                  }
+                };
+              }
+
+              // Handle interruption (e.g. user starts talking over the AI)
+              if (message.serverContent?.interrupted) {
+                sourcesRef.current.forEach(s => s.stop());
+                sourcesRef.current.clear();
+                nextStartTimeRef.current = 0;
+                setStatus('listening');
+              }
+
+              // 2. PROCESS TEXT (BACKGROUND - NO LAG IMPACT)
+              if (message.serverContent?.inputTranscription?.text) {
+                 currentInputBuffer.current += message.serverContent.inputTranscription.text;
+              }
+              if (message.serverContent?.outputTranscription?.text) {
+                 currentOutputBuffer.current += message.serverContent.outputTranscription.text;
+              }
+
+              // Box up the text segments when the turn is complete
+              if (message.serverContent?.turnComplete) {
+                flushBuffers();
+              }
+
+              // 3. SESSION LIFECYCLE — capture resumption handles, and
+              // proactively reconnect on `goAway` instead of letting the
+              // server hard-abort the socket (code 1008) once its
+              // session-duration limit is reached.
+              const signal = parseLiveSessionSignal(message);
+              if (signal.resumableHandle) {
+                resumeHandleRef.current = signal.resumableHandle;
+              }
+              if (signal.goAway && !isReconnectingRef.current && !isUnmountedRef.current) {
+                isReconnectingRef.current = true;
+                setStatus('connecting');
+                const staleSession = await sessionPromiseRef.current;
+                staleSession?.close();
+                if (!isUnmountedRef.current) {
+                  sessionPromiseRef.current = connectLive(resumeHandleRef.current);
+                  sessionRef.current = await sessionPromiseRef.current;
+                }
+                isReconnectingRef.current = false;
+              }
+            },
+            onerror: (e) => {
+              console.error("Voice Socket Error:", e);
+              if (!isReconnectingRef.current) setStatus('idle');
+            },
+            onclose: (e) => {
+              // A close we triggered ourselves mid-reconnect is expected —
+              // the real (or lack of a) closure is whatever connectLive()
+              // does next, not this one.
+              if (isReconnectingRef.current) return;
+              console.error("Voice Socket Closed:", { code: e?.code, reason: e?.reason, wasClean: e?.wasClean, raw: e });
+              setStatus('idle');
             }
-          },
-          onerror: (e) => {
-            console.error("Voice Socket Error:", e);
-            setStatus('idle');
-          },
-          onclose: (e) => {
-            console.error("Voice Socket Closed:", { code: e?.code, reason: e?.reason, wasClean: e?.wasClean, raw: e });
-            setStatus('idle');
           }
-        }
-      });
+        });
+      };
+
+      sessionPromiseRef.current = connectLive();
 
       workletNode.port.onmessage = (e) => {
         const pcm16 = e.data as Int16Array;
@@ -187,10 +233,10 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
         for (let i = 0; i < pcm16.length; i++) sum += pcm16[i] * pcm16[i];
         setVolume(Math.sqrt(sum / pcm16.length) / 32768);
         const data = base64Encode(pcm16);
-        sessionPromise.then(s => s.sendRealtimeInput({ audio: { data, mimeType: 'audio/pcm;rate=16000' } }));
+        sessionPromiseRef.current?.then(s => s.sendRealtimeInput({ audio: { data, mimeType: 'audio/pcm;rate=16000' } }));
       };
 
-      sessionRef.current = await sessionPromise;
+      sessionRef.current = await sessionPromiseRef.current;
     } catch (err) {
       console.error("Failed to start voice session:", err);
       setIsConnecting(false);
@@ -201,6 +247,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   useEffect(() => {
     startSession();
     return () => {
+      isUnmountedRef.current = true;
       sessionRef.current?.close();
       streamRef.current?.getTracks().forEach(t => t.stop());
       videoStreamRef.current?.getTracks().forEach(t => t.stop());
