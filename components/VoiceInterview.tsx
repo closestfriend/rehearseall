@@ -5,6 +5,11 @@ import { MODELS, buildInterviewerSystemInstruction, InterviewerPersona } from '.
 import { ResumeData } from '../types';
 import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
 import { parseLiveSessionSignal } from '../lib/liveSessionSignals';
+import ThemedVoiceInterviewChrome from './theme/ThemedVoiceInterviewChrome';
+
+// Rough proxy for "questions asked" (one interviewer turn ≈ one question) — the
+// client has no other way to know where Gemini is in its own 5-7 question plan.
+const TOTAL_QUESTIONS_ESTIMATE = 6;
 
 interface VoiceInterviewProps {
   resume: ResumeData;
@@ -19,7 +24,14 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   const [volume, setVolume] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  
+
+  // Presentational-only state for the themed chrome — purely additive, does not
+  // touch the audio pipeline or session lifecycle below.
+  const [questionCount, setQuestionCount] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [muted, setMuted] = useState(false);
+
   // High-level logs for the evaluation
   const transcriptionRef = useRef<string[]>([]);
   
@@ -81,7 +93,9 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     if (output) {
       transcriptionRef.current.push(`Interviewer: ${output}`);
       currentOutputBuffer.current = '';
+      setQuestionCount(c => c + 1);
     }
+    setLiveTranscript('');
   }, []);
 
   const startSession = useCallback(async () => {
@@ -179,9 +193,11 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
               // 2. PROCESS TEXT (BACKGROUND - NO LAG IMPACT)
               if (message.serverContent?.inputTranscription?.text) {
                  currentInputBuffer.current += message.serverContent.inputTranscription.text;
+                 setLiveTranscript(currentInputBuffer.current);
               }
               if (message.serverContent?.outputTranscription?.text) {
                  currentOutputBuffer.current += message.serverContent.outputTranscription.text;
+                 setLiveTranscript(currentOutputBuffer.current);
               }
 
               // Box up the text segments when the turn is complete
@@ -295,6 +311,21 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     }
   }, [cameraOn]);
 
+  // Presentational-only elapsed timer for the themed chrome — isolated from
+  // the audio/session effects above.
+  useEffect(() => {
+    const id = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted(prev => {
+      const next = !prev;
+      streamRef.current?.getAudioTracks().forEach(t => { t.enabled = !next; });
+      return next;
+    });
+  }, []);
+
   const handleBeginTap = useCallback(async () => {
     const ctxs = audioCtxRef.current;
     try {
@@ -335,110 +366,50 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     onFinish(transcriptionRef.current);
   };
 
-  const getStatusColor = () => {
-    switch(status) {
-      case 'listening': return 'text-green-500 bg-green-50';
-      case 'speaking': return 'text-blue-500 bg-blue-50';
-      case 'connecting': return 'text-amber-500 bg-amber-50';
-      default: return 'text-gray-500 bg-gray-50';
-    }
-  };
-
   return (
-    <div className="max-w-xl mx-auto py-4 sm:py-12 px-4">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-10 text-center relative overflow-hidden">
-        {needsGesture && (
-          <div className="absolute inset-0 z-20 bg-white/95 flex flex-col items-center justify-center gap-4 rounded-3xl">
-            <p className="text-gray-600 font-medium px-8 text-center">
-              Your browser needs a tap to enable audio.
-            </p>
-            <button
-              onClick={handleBeginTap}
-              className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg shadow-lg shadow-blue-200"
-            >
-              Tap to begin
-            </button>
-          </div>
-        )}
-        <div className={`absolute top-0 left-0 w-full h-1 transition-all duration-500 ${status === 'speaking' ? 'bg-blue-500' : status === 'listening' ? 'bg-green-500' : 'bg-transparent'}`} />
-
-        {cameraOn && (
-          <div className="absolute top-4 right-4 w-32 h-24 rounded-2xl overflow-hidden border border-gray-200 shadow-lg bg-gray-900 z-10">
-            <video
-              ref={videoElRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-          </div>
-        )}
-        
-        <div className="mb-10">
-          <div className="relative inline-block">
-            <div className={`absolute inset-0 rounded-full transition-all duration-300 border-2 ${status === 'listening' ? 'border-green-200 scale-150 opacity-20' : status === 'speaking' ? 'border-blue-200 scale-125 opacity-20' : 'opacity-0'}`} />
-            
-            <div 
-              className={`w-40 h-40 rounded-full flex items-center justify-center transition-all duration-150 ${status === 'speaking' ? 'bg-blue-50' : 'bg-gray-50'}`}
-              style={{ transform: `scale(${1 + volume * 0.4})` }}
-            >
-              <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${status === 'speaking' ? 'bg-blue-600 shadow-xl shadow-blue-200' : 'bg-white shadow-lg border border-gray-100'}`}>
-                {status === 'speaking' ? (
-                  <div className="flex items-end gap-1.5 h-8">
-                    <div className="w-1.5 bg-white rounded-full animate-[bounce_0.6s_infinite] h-4" />
-                    <div className="w-1.5 bg-white rounded-full animate-[bounce_0.6s_infinite_0.1s] h-8" />
-                    <div className="w-1.5 bg-white rounded-full animate-[bounce_0.6s_infinite_0.2s] h-6" />
-                  </div>
-                ) : (
-                  <svg className={`w-12 h-12 transition-colors duration-300 ${status === 'listening' ? 'text-green-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-10-4V5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2z" />
-                  </svg>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-10 space-y-3">
-            <div className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${getStatusColor()}`}>
-              <span className={`w-2 h-2 rounded-full mr-2 ${status === 'listening' ? 'bg-green-500 animate-pulse' : status === 'speaking' ? 'bg-blue-500' : 'bg-gray-400'}`} />
-              {status}
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              {isConnecting ? "Initializing AI..." : status === 'speaking' ? "Interviewer is Speaking" : "Listening to You..."}
-            </h2>
-            <p className="text-gray-500 max-w-sm mx-auto">
-              Speak naturally as you would in a real interview. Use the button below when you're done.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-[env(safe-area-inset-bottom)]">
-          <button
-            onClick={onCancel}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-2 sm:order-none"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleFinish}
-            className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-gray-200 flex items-center justify-center gap-2 order-1 sm:order-none"
-          >
-            End Interview
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          </button>
-          <button
-            onClick={toggleCamera}
-            className="px-6 py-4 border border-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 order-3 sm:order-none"
-          >
-            {cameraOn ? 'Turn off camera' : 'Turn on camera'}
-          </button>
-        </div>
-        {cameraError && (
-          <p className="mt-3 text-xs text-gray-400">{cameraError}</p>
-        )}
-      </div>
-    </div>
+    <>
+      <ThemedVoiceInterviewChrome
+        roleLabel={resume.role}
+        levelLabel={resume.experienceLevel}
+        status={status}
+        isConnecting={isConnecting}
+        volume={volume}
+        questionCount={questionCount}
+        totalQuestions={TOTAL_QUESTIONS_ESTIMATE}
+        elapsedSeconds={elapsedSeconds}
+        liveTranscript={liveTranscript}
+        needsGesture={needsGesture}
+        onBeginTap={handleBeginTap}
+        cameraOn={cameraOn}
+        cameraError={cameraError}
+        onToggleCamera={toggleCamera}
+        muted={muted}
+        onMute={toggleMute}
+        onFinish={handleFinish}
+        onCancel={onCancel}
+      />
+      {cameraOn && (
+        <video
+          ref={videoElRef}
+          autoPlay
+          muted
+          playsInline
+          style={{
+            position: 'fixed',
+            top: 84,
+            right: 24,
+            width: 160,
+            height: 120,
+            borderRadius: 12,
+            objectFit: 'cover',
+            transform: 'scaleX(-1)',
+            border: '1px solid rgba(255,255,255,.2)',
+            boxShadow: '0 8px 24px rgba(0,0,0,.4)',
+            zIndex: 10,
+          }}
+        />
+      )}
+    </>
   );
 };
 

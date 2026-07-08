@@ -1,0 +1,183 @@
+import React from 'react';
+import type { HistoryEntry } from '../../../types';
+import { INTERVIEWER_PERSONAS } from '../../../constants';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { toSessionRow } from '../sessionMapping';
+
+interface Props {
+  history: HistoryEntry[];
+  onStartInterview: () => void;
+  onViewSession: (entry: HistoryEntry) => void;
+  onViewSessionLog: () => void;
+}
+
+const revealedPersonas = INTERVIEWER_PERSONAS.slice(0, 3).map(p => p.name).join(', ');
+const sealedCount = INTERVIEWER_PERSONAS.length - 3;
+
+const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSession, onViewSessionLog }) => {
+  const { setTheme } = useTheme();
+  const sessions = history.slice(0, 3).map(toSessionRow);
+  const hasSessions = sessions.length > 0;
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#e9e6dc', padding: '0 0 48px', color: '#1c1b18', fontFamily: "'IBM Plex Mono', ui-monospace, monospace" }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', background: '#fbfaf6', boxShadow: '0 2px 24px rgba(28,27,24,.12)' }}>
+
+        {/* NAV */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 64px', borderBottom: '1px dashed #b9b4a5' }}>
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '0.06em' }}>HIREPREP_</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 12.5, color: '#6d685c' }}>
+            <a href="#practice" style={{ color: '#6d685c' }}>[practice]</a>
+            <a href="#sessions" style={{ color: '#6d685c' }}>[sessions]</a>
+            <a href="#pricing" style={{ color: '#6d685c' }}>[pricing]</a>
+            <button
+              type="button"
+              onClick={() => setTheme('personal-best')}
+              title="Switch to the Personal Best theme"
+              style={{ background: 'none', border: 'none', color: '#6d685c', fontFamily: 'inherit', fontSize: 12.5, cursor: 'pointer' }}
+            >
+              [switch outfit]
+            </button>
+            <button
+              type="button"
+              style={{ color: '#1c1b18', border: '1px solid #1c1b18', padding: '8px 18px', background: 'none', fontFamily: 'inherit', fontSize: 12.5, cursor: 'pointer' }}
+            >
+              sign in
+            </button>
+          </div>
+        </div>
+
+        {/* HERO */}
+        <div style={{ padding: '80px 64px 64px', borderBottom: '1px dashed #b9b4a5', position: 'relative' }}>
+          <div style={{ fontSize: 12, color: '#6d685c', marginBottom: 36 }}>
+            TRANSCRIPT OF PROCEEDINGS — MOCK INTERVIEW, CONFIDENTIAL<br />
+            IN RE: YOUR NEXT JOB
+          </div>
+          <h1 style={{ margin: 0, fontSize: 64, lineHeight: 1.12, fontWeight: 400, letterSpacing: '-0.02em', maxWidth: 940 }}>
+            The interview happened.<br />
+            <span style={{ background: '#1c1b18', color: '#fbfaf6', padding: '0 12px' }}>
+              Nobody was <span style={{ whiteSpace: 'nowrap' }}>
+                watching.
+                <span style={{ display: 'inline-block', width: '0.55em', height: '1em', verticalAlign: '-0.12em', marginLeft: 10 }}>
+                  <span style={{ display: 'block', width: '100%', height: '100%', background: '#b3402a', animation: 'hpCaret 1.1s step-end infinite' }} />
+                </span>
+              </span>
+            </span>
+          </h1>
+          <p style={{ margin: '38px 0 0', fontSize: 15, lineHeight: 1.8, color: '#54503f', maxWidth: 600 }}>
+            Rehearse the whole thing — the hard questions, the follow-ups, the awkward pause — with an interviewer who takes notes so you don&apos;t have to. Then read the record.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 40 }}>
+            <button
+              type="button"
+              onClick={onStartInterview}
+              style={{ display: 'inline-block', background: '#1c1b18', color: '#fbfaf6', padding: '16px 32px', fontSize: 14, fontWeight: 600, border: 'none', fontFamily: 'inherit', cursor: 'pointer' }}
+            >
+              BEGIN SESSION →
+            </button>
+            <span style={{ fontSize: 12.5, color: '#6d685c' }}>voice or text · 5–7 questions · full debrief on record</span>
+          </div>
+          <div style={{ position: 'absolute', top: 70, right: 64, transform: 'rotate(6deg)', border: '2.5px solid #b3402a', color: '#b3402a', fontSize: 13, fontWeight: 700, letterSpacing: '0.24em', padding: '8px 16px', opacity: 0.85 }}>
+            OFF THE RECORD
+          </div>
+        </div>
+
+        {/* EXHIBIT A */}
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', borderBottom: '1px dashed #b9b4a5' }}>
+          <div style={{ padding: '44px 24px 44px 64px', borderRight: '1px dashed #b9b4a5', fontSize: 12, color: '#6d685c', lineHeight: 2 }}>EXHIBIT A<br />— the format</div>
+          <div style={{ padding: '44px 64px 52px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 26, maxWidth: 760 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 18 }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
+                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>Walk me through a project where the initial approach failed. What did you do next?</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 18 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#b3402a' }}>YOU:</span>
+                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>
+                  In my last role we shipped a caching layer that— <span style={{ background: '#efe9d5' }}>[answers 5–7 questions like this, out loud or typed]</span>
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 18 }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
+                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>You said &quot;we.&quot; What was <em>your</em> decision in that moment?</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#6d685c', paddingLeft: 128 }}>— real follow-ups, generated from what you actually said</div>
+            </div>
+          </div>
+        </div>
+
+        {/* EXHIBIT B */}
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', borderBottom: '1px dashed #b9b4a5' }}>
+          <div style={{ padding: '44px 24px 44px 64px', borderRight: '1px dashed #b9b4a5', fontSize: 12, color: '#6d685c', lineHeight: 2 }}>EXHIBIT B<br />— the debrief</div>
+          <div style={{ padding: '44px 64px 52px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 48, alignItems: 'start' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 96, fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1 }}>82<span style={{ fontSize: 28, color: '#6d685c' }}>/100</span></div>
+              <div style={{ fontSize: 11.5, color: '#6d685c', marginTop: 8 }}>calibrated to role + level</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 13.5, lineHeight: 1.7, color: '#33301f', maxWidth: 560 }}>
+              <div>✓&nbsp; STRENGTHS — where your answers landed, quoted back to you</div>
+              <div>✗&nbsp; GAPS — the moments that cost you, and why</div>
+              <div>→&nbsp; REWRITES — stronger versions of your weakest answers</div>
+              <div style={{ color: '#6d685c', fontSize: 12.5, marginTop: 6 }}>
+                Plus the reveal: which of six interviewer personas you drew. {revealedPersonas}, and {sealedCount} others remain sealed until the debrief.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PRIOR PROCEEDINGS */}
+        <div style={{ borderBottom: '1px dashed #b9b4a5' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr' }}>
+            <div style={{ padding: '40px 24px 40px 64px', borderRight: '1px dashed #b9b4a5', fontSize: 12, color: '#6d685c', lineHeight: 2 }}>
+              PRIOR<br />PROCEEDINGS<br />
+              <button
+                type="button"
+                onClick={onViewSessionLog}
+                style={{ color: '#b3402a', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 'inherit' }}
+              >
+                full docket →
+              </button>
+            </div>
+            <div style={{ padding: '32px 64px 40px' }}>
+              {hasSessions ? sessions.map((s, i) => (
+                <div
+                  key={s.entry.id}
+                  onClick={() => onViewSession(s.entry)}
+                  style={{ display: 'grid', gridTemplateColumns: '80px 1fr 150px 60px', gap: 14, alignItems: 'baseline', padding: '13px 0', borderBottom: i < sessions.length - 1 ? '1px dashed #d8d3c3' : undefined, fontSize: 13.5, cursor: 'pointer' }}
+                >
+                  <span style={{ color: '#6d685c' }}>{s.dateSlash}</span>
+                  <span style={{ fontWeight: 600 }}>{s.role}</span>
+                  <span style={{ color: '#6d685c' }}>{s.persona}</span>
+                  <span style={{ fontWeight: 700, justifySelf: 'end' }}>{s.score}</span>
+                </div>
+              )) : (
+                <div style={{ fontSize: 13.5, color: '#6d685c' }}>No proceedings on record yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* PRICING */}
+        <div id="pricing" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 40, padding: '44px 64px', borderBottom: '1px dashed #b9b4a5' }}>
+          <div style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f', maxWidth: 620 }}>
+            COST OF PROCEEDINGS: <span style={{ fontSize: 26, fontWeight: 700 }}>$0.00</span> — free while in preview. Sign in to keep your record.
+          </div>
+          <button
+            type="button"
+            style={{ flex: 'none', background: '#b3402a', color: '#fbfaf6', padding: '15px 30px', fontSize: 13.5, fontWeight: 700, border: 'none', fontFamily: 'inherit', cursor: 'pointer' }}
+          >
+            SIGN IN
+          </button>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '18px 64px', fontSize: 12, color: '#6d685c' }}>
+          <span>HIREPREP_</span>
+          <span>certified true copy · © 2026</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TranscriptHome;
