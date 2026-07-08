@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import InterviewChat from './components/InterviewChat';
 import VoiceInterview from './components/VoiceInterview';
+import ThemedHome from './components/theme/ThemedHome';
+import ThemedDebrief from './components/theme/ThemedDebrief';
+import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
 import { geminiService } from './services/geminiService';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
@@ -27,16 +30,7 @@ const App: React.FC = () => {
   const [currentTranscript, setCurrentTranscript] = useState<InterviewMessage[]>([]);
   const [currentPersona, setCurrentPersona] = useState<InterviewerPersona | null>(null);
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
-
-  const [expandedSuggestions, setExpandedSuggestions] = useState<Set<number>>(new Set());
-
-  const toggleSuggestion = (idx: number) => {
-    setExpandedSuggestions(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx); else next.add(idx);
-      return next;
-    });
-  };
+  const [currentMode, setCurrentMode] = useState<'voice' | 'text' | null>(null);
 
   // Load history on mount
   useEffect(() => {
@@ -68,7 +62,6 @@ const App: React.FC = () => {
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
-    setExpandedSuggestions(new Set());
     setStage(AppStage.RESUME_UPLOAD);
   };
 
@@ -80,7 +73,6 @@ const App: React.FC = () => {
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
-    setExpandedSuggestions(new Set());
     setStage(AppStage.RESUME_UPLOAD);
   };
 
@@ -111,6 +103,7 @@ const App: React.FC = () => {
     const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
     const persona = pickPersona(lastId);
     setCurrentPersona(persona);
+    setCurrentMode(mode === AppStage.INTERVIEWING_VOICE ? 'voice' : 'text');
     setDisplayPersonaName(null); // clear any name left over from viewing past history
     // Persist the choice up front (before the interview completes) so the next
     // run still excludes it even if the user backs out — deliberate, for anti-repeat.
@@ -132,7 +125,6 @@ const App: React.FC = () => {
     setFeedbackError(null);
     setStage(AppStage.FEEDBACK);
     setCurrentTranscript(messages);
-    setExpandedSuggestions(new Set());
     try {
       const result = await geminiService.generateFeedback(resumeData, messages);
       setFeedback(result);
@@ -150,6 +142,7 @@ const App: React.FC = () => {
         transcript: messages,
         feedback: result,
         personaName,
+        mode: currentMode ?? undefined,
       };
       saveToHistory(entry);
       setDisplayPersonaName(personaName);
@@ -172,7 +165,7 @@ const App: React.FC = () => {
     setFeedback(entry.feedback);
     setCurrentTranscript(entry.transcript);
     setDisplayPersonaName(entry.personaName ?? null);
-    setExpandedSuggestions(new Set());
+    setCurrentMode(entry.mode ?? null);
     setStage(AppStage.FEEDBACK);
   };
 
@@ -212,112 +205,6 @@ ${transcriptMd}
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  const renderLanding = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-      <div className="text-center mb-20">
-        <h1 className="text-5xl lg:text-7xl font-extrabold text-gray-900 tracking-tight mb-8">
-          Master your next <br />
-          <span className="text-blue-600">job interview</span>
-        </h1>
-        <p className="max-w-2xl mx-auto text-xl text-gray-500 mb-12">
-          HirePrep AI analyzes your resume and conducts realistic mock interviews. Get instant feedback on your answers and communication.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button 
-            onClick={handleStartResume}
-            className="px-10 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"
-          >
-            Start New Practice
-          </button>
-        </div>
-      </div>
-      
-      {history.length > 0 && (
-        <div className="mb-24">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Your Recent Activity</h2>
-            <span className="text-sm text-gray-500 font-medium">{history.length} Sessions logged</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {history.map((entry) => (
-              <div 
-                key={entry.id}
-                onClick={() => viewHistoryItem(entry)}
-                className="group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer relative"
-              >
-                <button 
-                  onClick={(e) => deleteHistoryItem(entry.id, e)}
-                  className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">
-                    {entry.feedback.score}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{entry.resume.role}</h3>
-                    <p className="text-xs text-gray-400 font-medium">
-                      {new Date(entry.date).toLocaleDateString()} at {new Date(entry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mb-4 flex-wrap">
-                  <span className="px-2 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{entry.resume.experienceLevel}</span>
-                  <span className="px-2 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{entry.transcript.length} Messages</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-blue-600 text-sm font-bold flex items-center gap-1">
-                    View Full Report <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); startPracticeAgain(entry); }}
-                    className="text-gray-400 text-xs font-bold hover:text-gray-600 transition-colors"
-                  >
-                    Practice Again
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="grid md:grid-cols-3 gap-12 text-center">
-        <div>
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-3">Resume Analysis</h3>
-          <p className="text-gray-500">We extract keywords and skills from your resume to tailor the interview questions.</p>
-        </div>
-        <div>
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
-             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-3">AI Mock Interview</h3>
-          <p className="text-gray-500">Practice via voice or text with a state-of-the-art AI that responds like a real recruiter.</p>
-        </div>
-        <div>
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-3">Instant Feedback</h3>
-          <p className="text-gray-500">Get a detailed report with scores, strengths, and specific areas to improve.</p>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderResumeUpload = () => (
     <div className="max-w-3xl mx-auto py-6 sm:py-16 px-4">
@@ -500,205 +387,31 @@ ${transcriptMd}
     </div>
   );
 
-  const renderFeedback = () => {
-    const suggestionByMessage = mapSuggestionsToMessages(currentTranscript, feedback?.suggestions);
-    return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      {isLoadingFeedback ? (
-        <div className="text-center py-24">
-          <div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
-          <h2 className="text-2xl font-bold text-gray-900">Analyzing Your Interview...</h2>
-          <p className="text-gray-500 mt-2">Our AI is reviewing your responses against best practices.</p>
-        </div>
-      ) : feedback ? (
-        <div className="space-y-8">
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 flex flex-col md:flex-row items-center gap-12">
-            <div className="relative w-40 h-40">
-              <svg className="w-full h-full" viewBox="0 0 36 36">
-                <path className="text-gray-100" strokeDasharray="100, 100" strokeWidth="3" fill="none" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path className="text-blue-600" strokeDasharray={`${feedback.score}, 100`} strokeWidth="3" strokeLinecap="round" fill="none" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-extrabold text-gray-900">{feedback.score}</span>
-                <span className="text-xs text-gray-400 font-bold tracking-widest uppercase">Score</span>
-              </div>
-            </div>
-            <div className="flex-grow text-center md:text-left">
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Performance Review</h2>
-              <p className="text-gray-500 text-lg leading-relaxed">
-                Interview report for <strong>{resumeData.role}</strong> ({resumeData.experienceLevel}).
-              </p>
-              {displayPersonaName && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Interviewed by <strong>{displayPersonaName}</strong>
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-2">Analyzed using Gemini 3 Flash</p>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-green-50 rounded-3xl p-8 border border-green-100">
-              <h3 className="text-xl font-bold text-green-800 mb-6 flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Key Strengths
-              </h3>
-              <ul className="space-y-4">
-                {feedback.strengths.map((s, i) => (
-                  <li key={i} className="flex gap-3 text-green-700">
-                    <span className="shrink-0 w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></span>
-                    <span className="text-sm font-medium">{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="bg-amber-50 rounded-3xl p-8 border border-amber-100">
-              <h3 className="text-xl font-bold text-amber-800 mb-6 flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Areas to Improve
-              </h3>
-              <ul className="space-y-4">
-                {feedback.improvements.map((s, i) => (
-                  <li key={i} className="flex gap-3 text-amber-700">
-                    <span className="shrink-0 w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></span>
-                    <span className="text-sm font-medium">{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Detailed Analysis</h3>
-            <div className="prose prose-blue max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
-              {feedback.detailedAnalysis}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-b from-gray-50 to-white rounded-3xl p-8 border border-gray-100">
-             <div className="flex items-center justify-between mb-6">
-               <h3 className="text-xl font-bold text-gray-900">Interview Transcript</h3>
-               <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-500">
-                 {currentTranscript.length} messages
-               </span>
-             </div>
-             <div className="transcript-scroll space-y-5 max-h-96 overflow-y-auto px-1 py-1">
-                {currentTranscript.map((m, i) => {
-                  const isUser = m.role === 'user';
-                  const speakerName = isUser ? 'You' : (displayPersonaName || 'Interviewer');
-                  const initial = isUser
-                    ? 'Y'
-                    : (displayPersonaName?.replace(/^The\s+/i, '').charAt(0).toUpperCase() || 'I');
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-end gap-3 animate-msg-in ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-                      style={{ animationDelay: `${Math.min(i * 60, 600)}ms` }}
-                    >
-                      <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
-                        isUser
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
-                          : 'bg-gradient-to-br from-slate-700 to-slate-900 text-white'
-                      }`}>
-                        {initial}
-                      </div>
-                      <div className={`flex flex-col max-w-[78%] ${isUser ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[11px] font-semibold text-gray-400 mb-1 px-1">{speakerName}</span>
-                        <div className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                          isUser
-                            ? 'bg-blue-600 text-white rounded-2xl rounded-br-md shadow-blue-600/15'
-                            : 'bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-bl-md'
-                        }`}>
-                          {m.content}
-                        </div>
-                        {isUser && suggestionByMessage[i] && (
-                          <div className="mt-2 w-full flex flex-col items-end">
-                            <button
-                              type="button"
-                              onClick={() => toggleSuggestion(i)}
-                              aria-expanded={expandedSuggestions.has(i)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                              </svg>
-                              Suggested improvement
-                              <svg className={`w-3.5 h-3.5 transition-transform ${expandedSuggestions.has(i) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            {expandedSuggestions.has(i) && (
-                              <div className="mt-2 w-full text-left bg-amber-50/60 border border-amber-100 rounded-2xl p-4 animate-msg-in">
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1">Why this fell short</p>
-                                <p className="text-sm text-gray-600 mb-3">{suggestionByMessage[i]!.critique}</p>
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1">Stronger answer</p>
-                                <p className="text-sm text-gray-800 bg-white border border-amber-100 rounded-xl p-3 leading-relaxed">{suggestionByMessage[i]!.modelAnswer}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
-            <button
-              onClick={() => startPracticeAgain()}
-              className="px-10 py-4 border border-gray-300 text-gray-700 rounded-full font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              Practice Again
-            </button>
-            <button
-              onClick={exportFeedbackAsMarkdown}
-              className="px-10 py-4 border border-gray-300 text-gray-700 rounded-full font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              Export as Markdown
-            </button>
-            <button
-              onClick={() => setStage(AppStage.LANDING)}
-              className="px-10 py-4 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800 transition-all"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-2xl mx-auto py-24 px-4 text-center">
-          <p className="text-red-500 font-bold text-lg mb-4">Failed to load feedback.</p>
-          {feedbackError && (
-            <pre className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl p-4 mb-6 text-left whitespace-pre-wrap break-all">
-              {feedbackError}
-            </pre>
-          )}
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={retryFeedback}
-              className="px-6 py-3 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800 transition-all"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => setStage(AppStage.LANDING)}
-              className="px-6 py-3 border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 transition-all"
-            >
-              Start Over
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-    );
+  // Picks one weak reply to show as the Debrief's before/after study example —
+  // the design shows a single rewrite, not the full suggestions list.
+  const getRewriteExample = (): { before: string; after: string; critique: string } | null => {
+    if (!feedback?.suggestions?.length) return null;
+    const aligned = mapSuggestionsToMessages(currentTranscript, feedback.suggestions);
+    const messageIndex = aligned.findIndex(s => s !== null);
+    if (messageIndex === -1) return null;
+    const suggestion = aligned[messageIndex]!;
+    return {
+      before: currentTranscript[messageIndex]?.content ?? '',
+      after: suggestion.modelAnswer,
+      critique: suggestion.critique,
+    };
   };
 
   const getStageContent = () => {
     switch(stage) {
-      case AppStage.LANDING: return renderLanding();
+      case AppStage.LANDING: return (
+        <ThemedHome
+          history={history}
+          onStartInterview={handleStartResume}
+          onViewSession={viewHistoryItem}
+          onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
+        />
+      );
       case AppStage.RESUME_UPLOAD: return renderResumeUpload();
       case AppStage.INTERVIEW_MODE: return renderInterviewMode();
       case AppStage.INTERVIEWING_TEXT: return currentPersona ? (
@@ -721,12 +434,58 @@ ${transcriptMd}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
       ) : renderInterviewMode();
-      case AppStage.FEEDBACK: return renderFeedback();
-      default: return renderLanding();
+      case AppStage.FEEDBACK: return (
+        <ThemedDebrief
+          state={isLoadingFeedback ? 'loading' : feedback ? 'success' : 'error'}
+          errorMessage={feedbackError ?? undefined}
+          onRetry={retryFeedback}
+          score={feedback?.score}
+          roleLabel={resumeData.role}
+          levelLabel={resumeData.experienceLevel}
+          questionCount={currentTranscript.filter(m => m.role === 'assistant').length}
+          modeLabel={currentMode ?? undefined}
+          personaName={displayPersonaName}
+          strengths={feedback?.strengths ?? []}
+          improvements={feedback?.improvements ?? []}
+          detailedAnalysis={feedback?.detailedAnalysis}
+          rewriteExample={getRewriteExample()}
+          onPracticeAgain={() => startPracticeAgain()}
+          onExportMarkdown={exportFeedbackAsMarkdown}
+          onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
+          onBackToDashboard={() => setStage(AppStage.LANDING)}
+        />
+      );
+      case AppStage.SESSION_LOG: return (
+        <ThemedSessionLog
+          history={history}
+          onViewSession={viewHistoryItem}
+          onDeleteSession={deleteHistoryItem}
+          onStartInterview={handleStartResume}
+          onBackToHome={() => setStage(AppStage.LANDING)}
+        />
+      );
+      default: return (
+        <ThemedHome
+          history={history}
+          onStartInterview={handleStartResume}
+          onViewSession={viewHistoryItem}
+          onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
+        />
+      );
     }
   };
 
-  return (
+  const usesThemedChrome = [
+    AppStage.LANDING,
+    AppStage.INTERVIEWING_TEXT,
+    AppStage.INTERVIEWING_VOICE,
+    AppStage.FEEDBACK,
+    AppStage.SESSION_LOG,
+  ].includes(stage);
+
+  return usesThemedChrome ? (
+    getStageContent()
+  ) : (
     <Layout>
       {getStageContent()}
     </Layout>

@@ -33,6 +33,7 @@ export interface HistoryEntry {
   transcript: InterviewMessage[];
   feedback: InterviewFeedback;
   personaName: string;
+  mode?: 'voice' | 'text';   // absent on entries saved before this field existed
 }
 
 export enum AppStage {
@@ -41,5 +42,8 @@ export enum AppStage {
   INTERVIEW_MODE = 'INTERVIEW_MODE',
   INTERVIEWING_TEXT = 'INTERVIEWING_TEXT',
   INTERVIEWING_VOICE = 'INTERVIEWING_VOICE',
-  FEEDBACK = 'FEEDBACK'
+  FEEDBACK = 'FEEDBACK',
+  SESSION_LOG = 'SESSION_LOG'
 }
+
+export type Theme = 'personal-best' | 'transcript';
