@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import Layout from './components/Layout';
 import InterviewChat from './components/InterviewChat';
 import VoiceInterview from './components/VoiceInterview';
 import ThemedHome from './components/theme/ThemedHome';
+import ThemedResumeUpload from './components/theme/ThemedResumeUpload';
+import ThemedModePicker from './components/theme/ThemedModePicker';
 import ThemedDebrief from './components/theme/ThemedDebrief';
 import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
@@ -31,6 +32,7 @@ const App: React.FC = () => {
   const [currentPersona, setCurrentPersona] = useState<InterviewerPersona | null>(null);
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
   const [currentMode, setCurrentMode] = useState<'voice' | 'text' | null>(null);
+  const [selectedMode, setSelectedMode] = useState<'voice' | 'text'>('voice');
 
   // Load history on mount
   useEffect(() => {
@@ -76,9 +78,12 @@ const App: React.FC = () => {
     setStage(AppStage.RESUME_UPLOAD);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileSelected = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      console.error('Resume file over the 10 MB limit:', file.size);
+      setResumeParseState('error');
+      return;
+    }
     setResumeParseState('parsing');
     try {
       const { parseResumeFile } = await import('./lib/resumeParser');
@@ -90,7 +95,6 @@ const App: React.FC = () => {
       console.error('Failed to parse resume file:', err);
       setResumeParseState('error');
     }
-    e.target.value = '';
   };
 
   const handleFileClear = () => {
@@ -111,13 +115,22 @@ const App: React.FC = () => {
     setStage(mode);
   };
 
-  const handleResumeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (resumeData.text && resumeData.role) {
-      const jd = resumeData.jobDescription?.trim();
-      setResumeData({ ...resumeData, jobDescription: jd || undefined });
-      setStage(AppStage.INTERVIEW_MODE);
-    }
+  const handleSetupContinue = () => {
+    if (!resumeData.role.trim()) return;
+    const jd = resumeData.jobDescription?.trim();
+    setResumeData({ ...resumeData, jobDescription: jd || undefined });
+    setStage(AppStage.INTERVIEW_MODE);
+  };
+
+  // Skip = proceed without a resume (the prompts have an explicit no-resume
+  // branch), not skip the setup flow — role/level/JD survive.
+  const handleSetupSkip = () => {
+    if (!resumeData.role.trim()) return;
+    const jd = resumeData.jobDescription?.trim();
+    setResumeData({ ...resumeData, text: '', jobDescription: jd || undefined });
+    setUploadedFile(null);
+    setResumeParseState('idle');
+    setStage(AppStage.INTERVIEW_MODE);
   };
 
   const processInterviewResults = async (messages: InterviewMessage[]) => {
@@ -207,184 +220,39 @@ ${transcriptMd}
   };
 
   const renderResumeUpload = () => (
-    <div className="max-w-3xl mx-auto py-6 sm:py-16 px-4">
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 lg:p-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Setup Your Interview</h2>
-        <form onSubmit={handleResumeSubmit} className="space-y-8">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Target Job Role</label>
-            <input 
-              required
-              placeholder="e.g. Senior Frontend Engineer"
-              className="w-full px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-base"
-              value={resumeData.role}
-              onChange={(e) => setResumeData({...resumeData, role: e.target.value})}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Experience Level</label>
-            <div className="grid grid-cols-3 gap-3">
-              {['entry', 'mid', 'senior'].map(level => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setResumeData({...resumeData, experienceLevel: level})}
-                  className={`py-3 rounded-xl border font-medium transition-all ${
-                    resumeData.experienceLevel === level 
-                    ? 'border-blue-600 bg-blue-50 text-blue-600 ring-1 ring-blue-600' 
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Job Description (optional)
-            </label>
-            <textarea
-              placeholder="Paste the full job description to tailor the interview…"
-              className="w-full h-32 sm:h-40 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none text-base"
-              value={resumeData.jobDescription ?? ''}
-              onChange={(e) => setResumeData({...resumeData, jobDescription: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <div className="mb-3">
-              {uploadedFile ? (
-                <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
-                  <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="text-sm font-medium text-blue-700 flex-grow truncate">{uploadedFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={handleFileClear}
-                    className="text-blue-400 hover:text-blue-600 transition-colors"
-                    aria-label="Remove file"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <label
-                    htmlFor="resume-file-input"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-all ${resumeParseState === 'parsing' ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    {resumeParseState === 'parsing' ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        Reading file…
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Upload PDF or .md
-                      </>
-                    )}
-                  </label>
-                  <input
-                    id="resume-file-input"
-                    type="file"
-                    accept=".pdf,.md,application/pdf,text/markdown"
-                    className="sr-only"
-                    onChange={handleFileUpload}
-                  />
-                  {resumeParseState === 'error' && (
-                    <p className="mt-2 text-xs text-red-500">Could not read that file — try another or paste your resume below.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              {uploadedFile ? 'Resume Content' : 'Resume Content (Paste here)'}
-            </label>
-            <textarea
-              required={!uploadedFile}
-              disabled={!!uploadedFile}
-              placeholder="Paste your resume details, skills, and work history here..."
-              className={`w-full h-40 sm:h-64 px-5 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-none text-base ${uploadedFile ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
-              value={resumeData.text}
-              onChange={(e) => setResumeData({...resumeData, text: e.target.value})}
-            />
-          </div>
-
-          <div className="flex gap-4">
-             <button 
-              type="button"
-              onClick={() => setStage(AppStage.LANDING)}
-              className="w-1/3 py-5 bg-gray-100 text-gray-600 rounded-2xl font-bold text-xl hover:bg-gray-200 transition-all"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              className="flex-grow py-5 bg-blue-600 text-white rounded-2xl font-bold text-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-            >
-              Continue
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <ThemedResumeUpload
+      role={resumeData.role}
+      onRoleChange={(v) => setResumeData(prev => ({ ...prev, role: v }))}
+      level={resumeData.experienceLevel}
+      onLevelChange={(v) => setResumeData(prev => ({ ...prev, experienceLevel: v }))}
+      jobDescription={resumeData.jobDescription ?? ''}
+      onJobDescriptionChange={(v) => setResumeData(prev => ({ ...prev, jobDescription: v }))}
+      resumeText={uploadedFile ? '' : resumeData.text}
+      onResumeTextChange={(v) => setResumeData(prev => ({ ...prev, text: v }))}
+      uploadedFileName={uploadedFile?.name ?? null}
+      parseState={resumeParseState}
+      parseSummary={
+        uploadedFile && resumeData.text
+          ? `parsed \u00b7 ${resumeData.text.trim().split(/\s+/).length.toLocaleString()} words`
+          : null
+      }
+      onFileSelected={handleFileSelected}
+      onFileClear={handleFileClear}
+      onContinue={handleSetupContinue}
+      onSkip={handleSetupSkip}
+      onBackToHome={() => setStage(AppStage.LANDING)}
+    />
   );
 
   const renderInterviewMode = () => (
-    <div className="max-w-4xl mx-auto py-24 px-4 text-center">
-      <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Choose Interview Format</h2>
-      <p className="text-gray-500 mb-8 text-lg">We've analyzed your details. How would you like to practice today?</p>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        <button 
-          onClick={() => startInterview(AppStage.INTERVIEWING_VOICE)}
-          className="group bg-white p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
-        >
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-10-4V5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold mb-2">Voice Interview</h3>
-          <p className="text-gray-500">Real-time conversational audio. Best for practicing verbal communication.</p>
-          <div className="mt-6 flex items-center text-blue-600 font-semibold gap-2">
-            Start Voice <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-          </div>
-        </button>
-
-        <button 
-          onClick={() => startInterview(AppStage.INTERVIEWING_TEXT)}
-          className="group bg-white p-10 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
-        >
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold mb-2">Chat Interview</h3>
-          <p className="text-gray-500">Interactive text messaging. Best for structuring complex technical answers.</p>
-          <div className="mt-6 flex items-center text-blue-600 font-semibold gap-2">
-            Start Chat <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-          </div>
-        </button>
-      </div>
-      <button 
-        onClick={() => setStage(AppStage.LANDING)}
-        className="mt-12 text-gray-400 font-medium hover:text-gray-600 transition-colors"
-      >
-        Go back to dashboard
-      </button>
-    </div>
+    <ThemedModePicker
+      roleLabel={resumeData.role}
+      levelLabel={resumeData.experienceLevel}
+      mode={selectedMode}
+      onModeChange={setSelectedMode}
+      onStart={() => startInterview(selectedMode === 'voice' ? AppStage.INTERVIEWING_VOICE : AppStage.INTERVIEWING_TEXT)}
+      onBack={() => setStage(AppStage.RESUME_UPLOAD)}
+    />
   );
 
   // Picks one weak reply to show as the Debrief's before/after study example —
@@ -475,21 +343,9 @@ ${transcriptMd}
     }
   };
 
-  const usesThemedChrome = [
-    AppStage.LANDING,
-    AppStage.INTERVIEWING_TEXT,
-    AppStage.INTERVIEWING_VOICE,
-    AppStage.FEEDBACK,
-    AppStage.SESSION_LOG,
-  ].includes(stage);
-
-  return usesThemedChrome ? (
-    getStageContent()
-  ) : (
-    <Layout>
-      {getStageContent()}
-    </Layout>
-  );
+  // Every stage now renders themed, full-bleed chrome — the old Layout
+  // wrapper (components/Layout.tsx) is no longer mounted anywhere.
+  return getStageContent();
 };
 
 export default App;
