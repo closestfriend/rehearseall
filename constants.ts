@@ -31,12 +31,15 @@ export function buildInterviewerSystemInstruction(
   const jdBlock = jd
     ? `\n\nJob Description (tailor your questions to this):\n${jd}`
     : '';
+  const resumeBlock = resume.text.trim()
+    ? `Candidate Resume: ${resume.text}`
+    : `Candidate Resume: none provided — the candidate chose to interview without one. Calibrate your questions to the target role and level alone, and don't reference or ask about a resume.`;
   return `${INTERVIEWER_CORE}
 
 PERSONA — ${persona.name}:
 ${persona.fragment}
 
-Candidate Resume: ${resume.text}
+${resumeBlock}
 Target Role: ${resume.role}
 Level: ${resume.experienceLevel}${jdBlock}`;
 }

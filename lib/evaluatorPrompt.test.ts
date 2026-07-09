@@ -30,4 +30,11 @@ describe('buildEvaluatorPrompt', () => {
     );
     expect(out).toContain('JOB DESCRIPTION: Own the data pipeline.');
   });
+
+  it('substitutes a no-resume note when the resume text is empty', () => {
+    const out = buildEvaluatorPrompt({ ...RESUME, text: '  ' }, TRANSCRIPT);
+    expect(out).toContain('none provided');
+    expect(out).toContain('do not penalize');
+    expect(out).toContain(TRANSCRIPT);
+  });
 });

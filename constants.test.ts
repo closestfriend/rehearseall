@@ -76,6 +76,17 @@ describe('buildInterviewerSystemInstruction', () => {
     expect(out).not.toContain('Job Description');
   });
 
+  it('falls back to a no-resume instruction when the resume text is empty', () => {
+    const noResume = buildInterviewerSystemInstruction(
+      { ...RESUME, text: '   ' },
+      skeptic
+    );
+    expect(noResume).toContain('none provided');
+    expect(noResume).toContain(RESUME.role);
+    // must still tell the model not to probe for a resume that doesn't exist
+    expect(noResume.toLowerCase()).toContain("don't reference or ask about a resume");
+  });
+
   it('includes the job description block when one is provided', () => {
     const withJd = buildInterviewerSystemInstruction(
       { ...RESUME, jobDescription: '  Build React dashboards in TypeScript.  ' },

@@ -11,8 +11,11 @@ export function buildEvaluatorPrompt(
 ): string {
   const jd = resume.jobDescription?.trim();
   const jdLine = jd ? `\n      JOB DESCRIPTION: ${jd}` : '';
+  const resumeLine = resume.text.trim()
+    ? resume.text
+    : 'none provided — the candidate interviewed without a resume. Score on the transcript alone; do not penalize the absence of resume corroboration.';
   return `
-      RESUME: ${resume.text}
+      RESUME: ${resumeLine}
       TARGET ROLE: ${resume.role}
       EXPERIENCE: ${resume.experienceLevel}${jdLine}
 
