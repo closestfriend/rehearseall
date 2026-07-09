@@ -50,3 +50,23 @@ export function useReveal<T extends HTMLElement>(): [React.RefObject<T>, boolean
 
   return [ref, revealed];
 }
+
+// Tracks whether the viewport is at/under a breakpoint (default 768px — phone
+// and small-tablet portrait). Use this to switch layout-shape inline style
+// values (grid columns, padding, which nav items render) since plain React
+// inline styles can't express @media queries directly. Font sizing should
+// prefer CSS clamp() strings instead of this hook where possible — that
+// scales continuously and doesn't need JS at all.
+export function useIsMobile(breakpoint: number = 768): boolean {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const onChange = () => setIsMobile(mql.matches);
+    onChange();
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, [breakpoint]);
+  return isMobile;
+}
