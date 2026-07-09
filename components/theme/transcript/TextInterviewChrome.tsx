@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useIsMobile } from '../hooks';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -30,6 +31,7 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
   onCancel,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -42,29 +44,37 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
       <div style={{ maxWidth: 1240, margin: '0 auto', minHeight: '100vh', background: '#fbfaf6', boxShadow: '0 2px 24px rgba(28,27,24,.12)', display: 'flex', flexDirection: 'column' }}>
 
         {/* TOP BAR */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 64px', borderBottom: '1px dashed #b9b4a5', flex: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flex: 'none', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 10 : 0 }}>
           <button type="button" onClick={onCancel} style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', color: '#1c1b18', padding: 0, fontFamily: 'inherit' }}>
             HIREPREP_
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11.5, letterSpacing: '0.18em', color: '#b3402a', fontWeight: 700 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: '#b3402a', animation: 'hpPulseFade 1.4s ease-in-out infinite' }} />
-            PROCEEDINGS IN SESSION
-          </div>
-          <button type="button" onClick={onFinish} style={{ fontSize: 12, color: '#6d685c', border: '1px solid #b9b4a5', padding: '7px 16px', background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11.5, letterSpacing: '0.18em', color: '#b3402a', fontWeight: 700 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: '#b3402a', animation: 'hpPulseFade 1.4s ease-in-out infinite' }} />
+              PROCEEDINGS IN SESSION
+            </div>
+          )}
+          <button type="button" onClick={onFinish} style={{ fontSize: 12, color: '#6d685c', border: '1px solid #b9b4a5', padding: isMobile ? '10px 16px' : '7px 16px', background: 'none', cursor: 'pointer', fontFamily: 'inherit', minHeight: isMobile ? 44 : undefined }}>
             adjourn
           </button>
+          {isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, letterSpacing: '0.14em', color: '#b3402a', fontWeight: 700, width: '100%' }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: '#b3402a', animation: 'hpPulseFade 1.4s ease-in-out infinite' }} />
+              PROCEEDINGS IN SESSION
+            </div>
+          )}
         </div>
 
         {/* CASE HEADER (untimed — no progress tracker per README) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '20px 64px 18px', borderBottom: '1px dashed #b9b4a5', flex: 'none', fontSize: 12, color: '#6d685c' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'baseline', gap: isMobile ? 4 : 0, padding: isMobile ? '16px 20px' : '20px 64px 18px', borderBottom: '1px dashed #b9b4a5', flex: 'none', fontSize: 12, color: '#6d685c' }}>
           <span>IN RE: {roleLabel.toUpperCase()} ({levelLabel.toUpperCase()}) — EXAMINATION UNDERWAY</span>
           <span style={{ letterSpacing: '0.1em' }}>UNTIMED</span>
         </div>
 
         {/* THREAD */}
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '48px 64px', display: 'flex', flexDirection: 'column', gap: 30, maxWidth: 920, boxSizing: 'border-box' }}>
+        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '28px 20px' : '48px 64px', display: 'flex', flexDirection: 'column', gap: isMobile ? 20 : 30, maxWidth: 920, boxSizing: 'border-box' }}>
           {messages.map((m, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 18 }}>
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: isMobile ? 4 : 18 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: m.role === 'user' ? '#b3402a' : '#1c1b18' }}>
                 {m.role === 'assistant' ? 'INTERVIEWER:' : 'YOU:'}
               </span>
@@ -74,22 +84,23 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
             </div>
           ))}
           {isTyping && (
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 18 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: isMobile ? 4 : 18 }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
               <span style={{ fontSize: 15, color: '#6d685c' }}>[preparing next question…]</span>
             </div>
           )}
           {!isTyping && lastIsUser && (
-            <div style={{ fontSize: 12, color: '#6d685c', paddingLeft: 138 }}>
+            <div style={{ fontSize: 12, color: '#6d685c', paddingLeft: isMobile ? 0 : 138 }}>
               [follow-up — entered into the record based on your prior answer]
             </div>
           )}
         </div>
 
         {/* INPUT */}
-        <form onSubmit={onSend} style={{ flex: 'none', borderTop: '1px dashed #b9b4a5', padding: '24px 64px 30px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 18, maxWidth: 920 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#b3402a', paddingTop: 14 }}>YOU:</span>
+        <form onSubmit={onSend} style={{ flex: 'none', borderTop: '1px dashed #b9b4a5', padding: isMobile ? '20px 20px 24px' : '24px 64px 30px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: isMobile ? 8 : 18, maxWidth: 920 }}>
+            {!isMobile && <span style={{ fontSize: 13, fontWeight: 700, color: '#b3402a', paddingTop: 14 }}>YOU:</span>}
+            {isMobile && <span style={{ fontSize: 13, fontWeight: 700, color: '#b3402a' }}>YOU:</span>}
             <div>
               <textarea
                 value={input}
@@ -115,13 +126,13 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
                   outline: 'none',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, gap: 16, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11.5, color: '#6d685c' }}>⏎ submits to the record · untimed</span>
-                <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginTop: 12, gap: 16, flexWrap: 'wrap' }}>
+                {!isMobile && <span style={{ fontSize: 11.5, color: '#6d685c' }}>⏎ submits to the record · untimed</span>}
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10 }}>
                   <button
                     type="button"
                     onClick={onFinish}
-                    style={{ background: 'none', color: '#1c1b18', border: '1px solid #b9b4a5', padding: '11px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ background: 'none', color: '#1c1b18', border: '1px solid #b9b4a5', padding: '11px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44 }}
                   >
                     REST YOUR CASE →
                   </button>
@@ -137,11 +148,13 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
                       border: 'none',
                       cursor: input.trim() ? 'pointer' : 'default',
                       fontFamily: 'inherit',
+                      minHeight: 44,
                     }}
                   >
                     SUBMIT
                   </button>
                 </div>
+                {isMobile && <span style={{ fontSize: 11, color: '#6d685c' }}>⏎ submits to the record · untimed</span>}
               </div>
             </div>
           </div>
