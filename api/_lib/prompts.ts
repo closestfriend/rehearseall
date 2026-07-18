@@ -1,5 +1,18 @@
-import { INTERVIEWER_PERSONAS } from '../../constants';
 import type { ResumeData } from '../../types';
+
+// Public roster, mirrored from constants.ts BY VALUE, not imported: Vercel's
+// function builder does per-file transpile with no bundling, so any runtime
+// import crossing the api/ boundary lands in the root package's ESM scope and
+// crashes the CJS-scoped function at load. prompts.test.ts asserts this list
+// stays id/name-identical to the client's INTERVIEWER_PERSONAS.
+const PERSONA_ROSTER: { id: string; name: string }[] = [
+  { id: 'skeptic', name: 'The Skeptic' },
+  { id: 'warm-mentor', name: 'The Warm Mentor' },
+  { id: 'rapid-fire', name: 'The Rapid-Fire Screener' },
+  { id: 'socratic', name: 'The Socratic Probe' },
+  { id: 'director', name: 'The Seasoned Director' },
+  { id: 'examiner', name: 'The Neutral Examiner' },
+];
 
 // Fallback chains: newroom's adopted resilience pattern (spec §2) — try the
 // primary, fall back on failure, record the last error.
@@ -43,8 +56,8 @@ export interface ServerPersona {
   fragment: string;
 }
 
-// The private half of each persona: voice + prompt fragment. Names stay in
-// constants.ts (they're public UI copy); fragments must never reach the bundle.
+// The private half of each persona: voice + prompt fragment. Names are public
+// UI copy (also in constants.ts); fragments must never reach the bundle.
 const PERSONA_PRIVATE: Record<string, { voiceId: string; fragment: string }> = {
   skeptic:       { voiceId: 'Kore',    fragment: `You are a sharp, evidence-driven interviewer. You don't take claims at face value: when the candidate asserts an achievement, press for the "how do you know," the metric, the counterfactual. Cordial but exacting. Open with a brief, no-nonsense introduction.` },
   'warm-mentor': { voiceId: 'Sulafat', fragment: `You are an encouraging interviewer who puts the candidate at ease while still digging into substance. Acknowledge good answers warmly, then go a level deeper. Invite the candidate to walk you through real experiences in their own words. Open with a friendly, welcoming introduction.` },
@@ -54,7 +67,7 @@ const PERSONA_PRIVATE: Record<string, { voiceId: string; fragment: string }> = {
   examiner:      { voiceId: 'Schedar', fragment: `You are an even, by-the-book examiner. You run a structured interview with a steady, neutral tone. Where it fits the role, you may organize behavioral questions around the situation, the action taken, and the result. Open with a plain, professional introduction.` },
 };
 
-export const SERVER_PERSONAS: ServerPersona[] = INTERVIEWER_PERSONAS.map(p => {
+export const SERVER_PERSONAS: ServerPersona[] = PERSONA_ROSTER.map(p => {
   const priv = PERSONA_PRIVATE[p.id];
   if (!priv) throw new Error(`No private persona definition for id "${p.id}"`);
   return { id: p.id, name: p.name, ...priv };

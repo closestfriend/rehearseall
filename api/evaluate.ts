@@ -5,7 +5,7 @@ import { sendError } from './_lib/http';
 import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
 import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from './_lib/prompts';
 import { buildEvaluatorPrompt } from './_lib/evaluatorPrompt';
-import { formatTranscriptForEvaluator } from '../lib/transcriptFormat';
+import { formatTranscriptForEvaluator } from './_lib/transcriptFormat';
 
 const FEEDBACK_SCHEMA = {
   type: Type.OBJECT,

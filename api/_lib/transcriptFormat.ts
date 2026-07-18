@@ -1,4 +1,4 @@
-import type { InterviewMessage } from '../types';
+import type { InterviewMessage } from '../../types';
 
 /**
  * Render the transcript for the evaluator with USER turns explicitly numbered

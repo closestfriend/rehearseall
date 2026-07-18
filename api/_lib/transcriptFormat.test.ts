@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { formatTranscriptForEvaluator } from './transcriptFormat';
-import type { InterviewMessage } from '../types';
+import type { InterviewMessage } from '../../types';
 
 const msg = (role: 'user' | 'assistant', content: string): InterviewMessage => ({ role, content, timestamp: 0 });
 

@@ -114,3 +114,16 @@ describe('MODELS', () => {
     expect(MODELS.VOICE_INTERVIEWER).toBe('gemini-3.1-flash-live-preview');
   });
 });
+
+// Drift guard: the roster inside prompts.ts is a BY-VALUE mirror of the
+// client's public list (a runtime import would crash the CJS-scoped function
+// under Vercel's per-file transpile — see the comment in prompts.ts).
+import { INTERVIEWER_PERSONAS } from '../../constants';
+
+describe('roster parity with constants.ts', () => {
+  it('matches the client roster id-for-id and name-for-name', () => {
+    expect(SERVER_PERSONAS.map(({ id, name }) => ({ id, name }))).toEqual(
+      INTERVIEWER_PERSONAS.map(({ id, name }) => ({ id, name }))
+    );
+  });
+});
