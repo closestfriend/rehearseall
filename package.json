@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:phone": "vite --mode lan-https",
-    "dev:full": "vercel dev",
+    "dev:full": "set -a; . ./.env.local 2>/dev/null; set +a; npx --yes vercel@latest dev",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
