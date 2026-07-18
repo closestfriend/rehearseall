@@ -39,9 +39,14 @@ npm run preview
 
 ## Environment Setup
 
-The app requires a Gemini API key:
-- Set `VITE_GEMINI_API_KEY` in `.env.local`
-- Access via `import.meta.env.VITE_GEMINI_API_KEY` (standard Vite pattern)
+The Gemini API key is **server-side only** (as of the gateway phase, Jul 2026):
+- Set `GEMINI_API_KEY` in `.env.local` (never a bare `.env` — it isn't gitignored). The same var is set in Vercel project env for all three environments.
+- There is no `VITE_`-prefixed key anywhere — nothing key-like may ship in the bundle (`npm run check:bundle` enforces this after a build).
+- Local dev that exercises interviews needs the functions: use `npm run dev:full` (sources `.env.local`, runs a current `vercel dev`; the stale global CLI is broken for ESM functions). Plain `npm run dev`/`dev:phone` serve no `/api` — point them at a deployment with `VITE_API_BASE` if needed.
+
+## Backend gateway (`api/`)
+
+All Gemini access goes through Vercel functions: `/api/chat` (text turns; server picks the persona, issues a `sessionId`, enforces a 40-turn ceiling), `/api/evaluate` (post-interview scoring), `/api/live-token` (voice; single-use config-locked ephemeral tokens — system instruction and voice never reach the client; `goAway` reconnects mint fresh tokens for the same persona), `/api/health`. Shared modules live in `api/_lib/` — **client code must never import from `api/_lib/`**; that boundary is what keeps prompt material (persona fragments, evaluator instructions, model ids — all in `api/_lib/prompts.ts`) out of the bundle. `constants.ts` retains only public persona names. Two build-shape constraints, learned the hard way: `api/` has its own CommonJS package scope (`api/package.json` + `api/tsconfig.json`) because Vercel's builder does per-file transpile with no bundling, and no runtime import may cross the `api/` boundary (type-only imports are fine; `prompts.test.ts` drift-guards the by-value persona roster against `constants.ts`).
 
 ## Architecture
 
@@ -139,5 +144,5 @@ Design/plan: `docs/superpowers/specs/2026-06-02-randomized-interviewer-personas-
 - **Vercel project**: `hireprep-ai` — linked via `.vercel/` (gitignored).
 - **GitHub repo**: `closestfriend/hireprep-ai` — connected for auto-deploys: `main` → production, branches → preview deployments.
 - **Production alias**: https://hireprep-ai-nine.vercel.app
-- **Environment variable**: `VITE_GEMINI_API_KEY` is set in Vercel for all three environments (production, preview, development).
-- The API key ships in the client bundle — acceptable for personal use. Moving to an ephemeral-token backend is the first task of the shipping phase (see `docs/superpowers/specs/2026-06-10-mobile-web-phase1-design.md` §5).
+- **Environment variables**: `GEMINI_API_KEY` (server-side, used by `/api` functions) is set in Vercel for all three environments. The legacy `VITE_GEMINI_API_KEY` is also still set there — **it must stay until the gateway branch merges to `main`** (production still builds from pre-gateway code); remove it after the merge.
+- The API key no longer ships in the client bundle — the gateway phase (`docs/superpowers/specs/2026-07-11-billing-and-variants-design.md`, phase 1) moved all Gemini access server-side. `noindex` stays ON until phase 2 (auth) closes the anonymous-access window.
