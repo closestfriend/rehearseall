@@ -10,7 +10,7 @@ import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
-import { pickPersona, LAST_PERSONA_STORAGE_KEY, InterviewerPersona } from './constants';
+import { LAST_PERSONA_STORAGE_KEY } from './constants';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
@@ -31,9 +31,6 @@ const App: React.FC = () => {
   const [currentTranscript, setCurrentTranscript] = useState<InterviewMessage[]>([]);
   // Server-picked persona (id+name only — fragments never reach the client).
   const [currentPersona, setCurrentPersona] = useState<{ id: string; name: string } | null>(null);
-  // TRANSITIONAL (removed in the live-token task): voice mode still picks
-  // client-side until /api/live-token exists.
-  const [voicePersona, setVoicePersona] = useState<InterviewerPersona | null>(null);
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
   const [currentMode, setCurrentMode] = useState<'voice' | 'text' | null>(null);
   const [selectedMode, setSelectedMode] = useState<'voice' | 'text'>('voice');
@@ -111,14 +108,6 @@ const App: React.FC = () => {
     setCurrentPersona(null);
     setCurrentMode(mode === AppStage.INTERVIEWING_VOICE ? 'voice' : 'text');
     setDisplayPersonaName(null); // clear any name left over from viewing past history
-    if (mode === AppStage.INTERVIEWING_VOICE) {
-      // TRANSITIONAL: old client-side pick, voice only (removed in Task 5).
-      const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
-      const persona = pickPersona(lastId);
-      setVoicePersona(persona);
-      setCurrentPersona({ id: persona.id, name: persona.name });
-      localStorage.setItem(LAST_PERSONA_STORAGE_KEY, persona.id);
-    }
     setStage(mode);
   };
 
@@ -306,10 +295,11 @@ ${transcriptMd}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
       );
-      case AppStage.INTERVIEWING_VOICE: return voicePersona ? (
+      case AppStage.INTERVIEWING_VOICE: return (
         <VoiceInterview
           resume={resumeData}
-          persona={voicePersona}
+          lastPersonaId={localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined}
+          onPersonaPicked={handlePersonaPicked}
           onFinish={(transcript) => processInterviewResults(transcript.map(t => ({
             role: t.startsWith('Candidate') ? 'user' : 'assistant',
             content: t.split(': ')[1] || '',
@@ -317,7 +307,7 @@ ${transcriptMd}
           })))}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
-      ) : renderInterviewMode();
+      );
       case AppStage.FEEDBACK: return (
         <ThemedDebrief
           state={isLoadingFeedback ? 'loading' : feedback ? 'success' : 'error'}
