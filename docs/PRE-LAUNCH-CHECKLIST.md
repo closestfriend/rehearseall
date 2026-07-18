@@ -9,12 +9,15 @@ before flipping it public.
 
 ## Why we're not public yet
 
-The Gemini API key is read client-side (`import.meta.env.VITE_GEMINI_API_KEY` in
-`components/InterviewChat.tsx`, `components/VoiceInterview.tsx`,
-`services/geminiService.ts`). Vite inlines `VITE_`-prefixed vars into the built
-JavaScript, so **the key ships inside the public bundle** on Vercel. Anyone who
-loads the page can extract it and spend against the account. A client-side
-password gate does NOT help — the bundle is served before any in-app gate runs.
+**Update (2026-07-17, gateway branch):** the original reason — the key shipping
+in the client bundle — is FIXED. All Gemini access now goes through `/api`
+functions; the key is a server-only `GEMINI_API_KEY` and `npm run check:bundle`
+proves the built bundle contains no key or prompt material. The remaining
+reason to stay quiet is different: the gateway has **no auth or quota yet**
+(phase 1 of `docs/superpowers/specs/2026-07-11-billing-and-variants-design.md`),
+so anyone with the URL can spend against the account through the endpoints —
+bounded only by the CORS allowlist, a per-session turn ceiling, and input caps.
+Phase 2 (sign-in required) closes this; `noindex` stays until then.
 
 ## What's in place now (the "keep it quiet" stopgaps)
 
@@ -32,12 +35,14 @@ from a targeted bundle scraper. They exist to buy time, not to secure anything.
 - [ ] If you turned on Vercel Deployment Protection, turn it off for production
 
 **Actually secure the key (the real fix):**
-- [ ] Move the key server-side: a Vercel `/api/*` function holds the key as a
-      *non*-`VITE_` env var and proxies text/evaluator calls to Gemini.
-- [ ] Voice (Live API) opens a WebSocket straight to Google — mint a short-lived
-      **ephemeral token** server-side instead of shipping the key.
-- [ ] Once the key is no longer in the bundle, remove `VITE_GEMINI_API_KEY` from
-      the Vercel build env.
+- [x] Move the key server-side: `/api/chat` + `/api/evaluate` hold the key as
+      `GEMINI_API_KEY` and proxy text/evaluator calls to Gemini. *(gateway branch, 2026-07-17)*
+- [x] Voice (Live API): `/api/live-token` mints single-use, config-locked
+      **ephemeral tokens** server-side; the key never reaches the browser. *(same)*
+- [ ] Once the gateway branch merges to `main`, remove `VITE_GEMINI_API_KEY`
+      from the Vercel build env (production still needs it until the merge).
+- [ ] Phase 2 (auth): require sign-in for interviews, closing the
+      anonymous-endpoint spend window that replaces the old key-in-bundle risk.
 
 **Harden regardless (do these now, not just at launch):**
 - [ ] In Google Cloud Console, restrict the key to the Generative Language API
