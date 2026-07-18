@@ -19,6 +19,8 @@ interface Props {
   onSend: (e: React.FormEvent) => void;
   onFinish: () => void;
   onCancel: () => void;
+  errorNotice?: string | null;
+  onRetryInit?: () => void;
 }
 
 const ThemedTextInterviewChrome: React.FC<Props> = (props) => {

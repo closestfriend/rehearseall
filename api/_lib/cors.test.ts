@@ -37,6 +37,7 @@ describe('allowedOrigins', () => {
 
   it('falls back to the built-in defaults when unset', () => {
     expect(allowedOrigins()).toContain('http://localhost:3000');
+    expect(allowedOrigins()).toContain('http://localhost:3001');
     expect(allowedOrigins()).toContain('https://hireprep-ai-nine.vercel.app');
   });
 });

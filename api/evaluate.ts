@@ -6,6 +6,7 @@ import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
 import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from './_lib/prompts';
 import { buildEvaluatorPrompt } from './_lib/evaluatorPrompt';
 import { formatTranscriptForEvaluator } from './_lib/transcriptFormat';
+import type { EvaluateRequest } from '../lib/gatewayTypes';
 
 const FEEDBACK_SCHEMA = {
   type: Type.OBJECT,
@@ -36,14 +37,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return sendError(res, 500, 'server_misconfigured', 'GEMINI_API_KEY unset');
 
-  const setup = validateSetup(req.body?.setup);
+  const body = (req.body ?? {}) as EvaluateRequest;
+  const setup = validateSetup(body.setup);
   if (setup.ok === false) return sendError(res, 400, 'bad_request', `evaluate: ${setup.reason}`);
   // Evaluation is one bounded call (unlike /api/chat, which pays per-turn), and a
   // long voice interview can legitimately produce more than the 80-message chat
   // ceiling in transcript lines. Give it double headroom here so those sessions
   // stay evaluable, while /api/chat keeps the strict 40-turn ceiling.
-  const transcript = validateMessages(req.body?.transcript, LIMITS.maxTurns * 4);
+  const transcript = validateMessages(body.transcript, LIMITS.maxTurns * 4);
   if (transcript.ok === false) {
+    // 400, not chat's 429: an over-cap transcript is permanently unevaluable
+    // (the cap is on the whole submission, not a rate), so retrying won't help.
     if (transcript.reason === 'turn_limit') return sendError(res, 400, 'turn_limit', 'evaluate: turn_limit');
     return sendError(res, 400, 'bad_request', `evaluate: ${transcript.reason}`);
   }
