@@ -1,5 +1,5 @@
 import type { ResumeData, InterviewMessage, InterviewFeedback } from '../types';
-import type { GatewayError } from '../lib/gatewayTypes';
+import type { GatewayError, ChatRequest, ChatResponse } from '../lib/gatewayTypes';
 
 // '' = same-origin (deployed + vercel dev). Set VITE_API_BASE to a deployed
 // preview URL when running plain `npm run dev` / `npm run dev:phone`, which
@@ -41,4 +41,8 @@ export function evaluateInterview(
   transcript: InterviewMessage[]
 ): Promise<InterviewFeedback> {
   return post<InterviewFeedback>('/api/evaluate', { setup, transcript });
+}
+
+export function sendChatTurn(body: ChatRequest): Promise<ChatResponse> {
+  return post<ChatResponse>('/api/chat', body);
 }
