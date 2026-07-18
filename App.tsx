@@ -8,7 +8,7 @@ import ThemedModePicker from './components/theme/ThemedModePicker';
 import ThemedDebrief from './components/theme/ThemedDebrief';
 import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
-import { geminiService } from './services/geminiService';
+import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { pickPersona, LAST_PERSONA_STORAGE_KEY, InterviewerPersona } from './constants';
 
@@ -139,7 +139,7 @@ const App: React.FC = () => {
     setStage(AppStage.FEEDBACK);
     setCurrentTranscript(messages);
     try {
-      const result = await geminiService.generateFeedback(resumeData, messages);
+      const result = await evaluateInterview(resumeData, messages);
       setFeedback(result);
 
       // currentPersona is always set before an interview can start (the
