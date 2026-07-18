@@ -54,4 +54,19 @@ describe('validateMessages', () => {
     expect(r.ok).toBe(false);
     if (r.ok === false) expect(r.reason).toBe('turn_limit');
   });
+
+  it('accepts a raised cap for evaluation of long voice transcripts', () => {
+    const msgs81 = Array.from({ length: LIMITS.maxTurns * 2 + 1 }, (_, i) =>
+      msg(i % 2 ? 'user' : 'assistant'));
+    const r = validateMessages(msgs81, LIMITS.maxTurns * 4);
+    expect(r.ok).toBe(true);
+  });
+
+  it('still flags histories past a raised cap with reason turn_limit', () => {
+    const msgs161 = Array.from({ length: LIMITS.maxTurns * 4 + 1 }, (_, i) =>
+      msg(i % 2 ? 'user' : 'assistant'));
+    const r = validateMessages(msgs161, LIMITS.maxTurns * 4);
+    expect(r.ok).toBe(false);
+    if (r.ok === false) expect(r.reason).toBe('turn_limit');
+  });
 });

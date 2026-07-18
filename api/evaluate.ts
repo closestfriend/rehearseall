@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
-import { validateSetup, validateMessages } from './_lib/validate';
+import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
 import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from './_lib/prompts';
 import { buildEvaluatorPrompt } from './_lib/evaluatorPrompt';
 import { formatTranscriptForEvaluator } from '../lib/transcriptFormat';
@@ -38,8 +38,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const setup = validateSetup(req.body?.setup);
   if (setup.ok === false) return sendError(res, 400, 'bad_request', `evaluate: ${setup.reason}`);
-  const transcript = validateMessages(req.body?.transcript);
-  if (transcript.ok === false) return sendError(res, 400, 'bad_request', `evaluate: ${transcript.reason}`);
+  // Evaluation is one bounded call (unlike /api/chat, which pays per-turn), and a
+  // long voice interview can legitimately produce more than the 80-message chat
+  // ceiling in transcript lines. Give it double headroom here so those sessions
+  // stay evaluable, while /api/chat keeps the strict 40-turn ceiling.
+  const transcript = validateMessages(req.body?.transcript, LIMITS.maxTurns * 4);
+  if (transcript.ok === false) {
+    if (transcript.reason === 'turn_limit') return sendError(res, 400, 'turn_limit', 'evaluate: turn_limit');
+    return sendError(res, 400, 'bad_request', `evaluate: ${transcript.reason}`);
+  }
   if (transcript.value.length === 0) return sendError(res, 400, 'bad_request', 'evaluate: empty transcript');
 
   const ai = new GoogleGenAI({ apiKey: key });
