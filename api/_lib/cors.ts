@@ -3,6 +3,7 @@ import { sendError } from './http';
 
 const DEFAULT_ALLOWED = [
   'http://localhost:3000',
+  'http://localhost:3001',
   'https://hireprep-ai-nine.vercel.app',
 ];
 

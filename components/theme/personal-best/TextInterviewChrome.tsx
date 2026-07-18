@@ -17,6 +17,8 @@ interface TextInterviewChromeProps {
   onSend: (e: React.FormEvent) => void;
   onFinish: () => void;
   onCancel: () => void;
+  errorNotice?: string | null;
+  onRetryInit?: () => void;
 }
 
 const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
@@ -29,6 +31,8 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
   onSend,
   onFinish,
   onCancel,
+  errorNotice,
+  onRetryInit,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -117,6 +121,22 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
           </div>
         )}
       </div>
+
+      {/* ERROR NOTICE */}
+      {errorNotice && (
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: isMobile ? '12px 20px 0' : '12px 40px 0', maxWidth: 860, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+          <span style={{ fontSize: 12.5, color: '#d4f222', letterSpacing: '0.02em' }}>{errorNotice}</span>
+          {onRetryInit && (
+            <button
+              type="button"
+              onClick={onRetryInit}
+              style={{ background: '#d4f222', color: '#101208', padding: '8px 18px', fontSize: 11.5, fontWeight: 700, letterSpacing: '0.06em', border: 'none', cursor: 'pointer', minHeight: 36, boxSizing: 'border-box' }}
+            >
+              RETRY
+            </button>
+          )}
+        </div>
+      )}
 
       {/* INPUT */}
       <form

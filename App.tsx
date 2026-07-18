@@ -34,6 +34,15 @@ const App: React.FC = () => {
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
   const [currentMode, setCurrentMode] = useState<'voice' | 'text' | null>(null);
   const [selectedMode, setSelectedMode] = useState<'voice' | 'text'>('voice');
+  // Pins the anti-repeat hint at interview start so the lastPersonaId prop
+  // stays referentially stable for the lifetime of the interview, even
+  // though handlePersonaPicked writes a new id to localStorage mid-session.
+  // Reading localStorage directly in the render cases would make the prop
+  // change identity as soon as the server picks a persona, which re-fires
+  // VoiceInterview's mount-effect cleanup (stops mic tracks, closes
+  // AudioContexts, marks the session unmounted) and kills audio after the
+  // very first mint.
+  const [pinnedLastPersonaId, setPinnedLastPersonaId] = useState<string | undefined>(undefined);
 
   // Load history on mount
   useEffect(() => {
@@ -108,6 +117,7 @@ const App: React.FC = () => {
     setCurrentPersona(null);
     setCurrentMode(mode === AppStage.INTERVIEWING_VOICE ? 'voice' : 'text');
     setDisplayPersonaName(null); // clear any name left over from viewing past history
+    setPinnedLastPersonaId(localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined);
     setStage(mode);
   };
 
@@ -289,7 +299,7 @@ ${transcriptMd}
       case AppStage.INTERVIEWING_TEXT: return (
         <InterviewChat
           resume={resumeData}
-          lastPersonaId={localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined}
+          lastPersonaId={pinnedLastPersonaId}
           onPersonaPicked={handlePersonaPicked}
           onFinish={processInterviewResults}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
@@ -298,7 +308,7 @@ ${transcriptMd}
       case AppStage.INTERVIEWING_VOICE: return (
         <VoiceInterview
           resume={resumeData}
-          lastPersonaId={localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined}
+          lastPersonaId={pinnedLastPersonaId}
           onPersonaPicked={handlePersonaPicked}
           onFinish={(transcript) => processInterviewResults(transcript.map(t => ({
             role: t.startsWith('Candidate') ? 'user' : 'assistant',
