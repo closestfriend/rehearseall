@@ -29,7 +29,11 @@ const App: React.FC = () => {
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [currentTranscript, setCurrentTranscript] = useState<InterviewMessage[]>([]);
-  const [currentPersona, setCurrentPersona] = useState<InterviewerPersona | null>(null);
+  // Server-picked persona (id+name only — fragments never reach the client).
+  const [currentPersona, setCurrentPersona] = useState<{ id: string; name: string } | null>(null);
+  // TRANSITIONAL (removed in the live-token task): voice mode still picks
+  // client-side until /api/live-token exists.
+  const [voicePersona, setVoicePersona] = useState<InterviewerPersona | null>(null);
   const [displayPersonaName, setDisplayPersonaName] = useState<string | null>(null);
   const [currentMode, setCurrentMode] = useState<'voice' | 'text' | null>(null);
   const [selectedMode, setSelectedMode] = useState<'voice' | 'text'>('voice');
@@ -104,16 +108,27 @@ const App: React.FC = () => {
   };
   
   const startInterview = (mode: AppStage.INTERVIEWING_VOICE | AppStage.INTERVIEWING_TEXT) => {
-    const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
-    const persona = pickPersona(lastId);
-    setCurrentPersona(persona);
+    setCurrentPersona(null);
     setCurrentMode(mode === AppStage.INTERVIEWING_VOICE ? 'voice' : 'text');
     setDisplayPersonaName(null); // clear any name left over from viewing past history
-    // Persist the choice up front (before the interview completes) so the next
-    // run still excludes it even if the user backs out — deliberate, for anti-repeat.
-    localStorage.setItem(LAST_PERSONA_STORAGE_KEY, persona.id);
+    if (mode === AppStage.INTERVIEWING_VOICE) {
+      // TRANSITIONAL: old client-side pick, voice only (removed in Task 5).
+      const lastId = localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined;
+      const persona = pickPersona(lastId);
+      setVoicePersona(persona);
+      setCurrentPersona({ id: persona.id, name: persona.name });
+      localStorage.setItem(LAST_PERSONA_STORAGE_KEY, persona.id);
+    }
     setStage(mode);
   };
+
+  // Called by the interview components when the server's first response
+  // resolves the persona. Persisting immediately (before the interview
+  // completes) keeps the deliberate anti-repeat-even-if-user-backs-out behavior.
+  const handlePersonaPicked = React.useCallback((p: { id: string; name: string }) => {
+    setCurrentPersona(p);
+    localStorage.setItem(LAST_PERSONA_STORAGE_KEY, p.id);
+  }, []);
 
   const handleSetupContinue = () => {
     if (!resumeData.role.trim()) return;
@@ -282,18 +297,19 @@ ${transcriptMd}
       );
       case AppStage.RESUME_UPLOAD: return renderResumeUpload();
       case AppStage.INTERVIEW_MODE: return renderInterviewMode();
-      case AppStage.INTERVIEWING_TEXT: return currentPersona ? (
+      case AppStage.INTERVIEWING_TEXT: return (
         <InterviewChat
           resume={resumeData}
-          persona={currentPersona}
+          lastPersonaId={localStorage.getItem(LAST_PERSONA_STORAGE_KEY) ?? undefined}
+          onPersonaPicked={handlePersonaPicked}
           onFinish={processInterviewResults}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
         />
-      ) : renderInterviewMode();
-      case AppStage.INTERVIEWING_VOICE: return currentPersona ? (
+      );
+      case AppStage.INTERVIEWING_VOICE: return voicePersona ? (
         <VoiceInterview
           resume={resumeData}
-          persona={currentPersona}
+          persona={voicePersona}
           onFinish={(transcript) => processInterviewResults(transcript.map(t => ({
             role: t.startsWith('Candidate') ? 'user' : 'assistant',
             content: t.split(': ')[1] || '',
