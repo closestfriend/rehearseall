@@ -38,9 +38,12 @@ export function validateSetup(raw: unknown): Validated<ResumeData> {
   };
 }
 
-export function validateMessages(raw: unknown): Validated<InterviewMessage[]> {
+export function validateMessages(
+  raw: unknown,
+  maxMessages: number = LIMITS.maxTurns * 2
+): Validated<InterviewMessage[]> {
   if (!Array.isArray(raw)) return { ok: false, reason: 'messages not an array' };
-  if (raw.length > LIMITS.maxTurns * 2) return { ok: false, reason: 'turn_limit' };
+  if (raw.length > maxMessages) return { ok: false, reason: 'turn_limit' };
   const out: InterviewMessage[] = [];
   for (const m of raw) {
     if (typeof m !== 'object' || m === null) return { ok: false, reason: 'message shape' };
