@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sendError } from './http';
 
 const DEFAULT_ALLOWED = [
   'http://localhost:3000',
@@ -37,9 +38,7 @@ export function applyCors(req: VercelRequest, res: VercelResponse): boolean {
   const verdict = resolveCorsOrigin(origin, req.headers.host, allowedOrigins());
 
   if (verdict === 'forbidden') {
-    res.status(403).json({
-      error: { code: 'origin_forbidden', message: 'This origin is not allowed to call the API.' },
-    });
+    sendError(res, 403, 'origin_forbidden', `blocked origin: ${origin}`);
     return true;
   }
   if (verdict === 'allowed' || verdict === 'same-origin') {
