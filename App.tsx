@@ -157,10 +157,10 @@ const App: React.FC = () => {
       const result = await evaluateInterview(resumeData, messages);
       setFeedback(result);
 
-      // currentPersona is always set before an interview can start (the
-      // INTERVIEWING_* render cases gate on it), so the fallback only guards
-      // an impossible state. Capture once so the saved entry and the on-screen
-      // reveal can never disagree.
+      // currentPersona is set by onPersonaPicked when the server's first
+      // response arrives — before any transcript exists to finish — so the
+      // fallback only guards the no-first-response edge. Capture once so the
+      // saved entry and the on-screen reveal can never disagree.
       const personaName = currentPersona?.name ?? 'Unknown';
 
       const entry: HistoryEntry = {
