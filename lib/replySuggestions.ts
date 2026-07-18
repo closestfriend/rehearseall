@@ -12,7 +12,7 @@ export function mapSuggestionsToMessages(
 ): (ReplySuggestion | null)[] {
   const byIndex = new Map<number, ReplySuggestion>();
   (suggestions ?? []).forEach(s => byIndex.set(s.replyIndex, s));
-  // User-turn counting mirrors lib/transcriptFormat.ts on purpose: both must
+  // User-turn counting mirrors api/_lib/transcriptFormat.ts on purpose: both must
   // use the identical 0-based "count only user messages" contract. Kept
   // separate because the output shapes differ (string vs. aligned array).
   let userTurn = -1;
