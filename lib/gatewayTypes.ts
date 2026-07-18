@@ -31,3 +31,24 @@ export interface ChatResponse {
   personaName: string;
   reply: string;
 }
+
+export interface LiveTokenRequest {
+  setup: ResumeData;
+  /** Anti-repeat hint, initial mint only. */
+  lastPersonaId?: string;
+  /** goAway reconnects need a fresh single-use token for the SAME persona. */
+  reconnect?: boolean;
+  /** Required when reconnect: true. */
+  sessionId?: string;
+  /** Required when reconnect: true. */
+  personaId?: string;
+}
+
+export interface LiveTokenResponse {
+  /** Ephemeral token name — used as the client apiKey with apiVersion v1alpha. */
+  token: string;
+  model: string;
+  sessionId: string;
+  personaId: string;
+  personaName: string;
+}

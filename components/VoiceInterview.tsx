@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { GoogleGenAI, Modality } from '@google/genai';
-import { MODELS, buildInterviewerSystemInstruction, InterviewerPersona } from '../constants';
+import { GoogleGenAI } from '@google/genai';
+import { mintLiveToken } from '../services/apiClient';
 import { ResumeData } from '../types';
 import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
 import { parseLiveSessionSignal } from '../lib/liveSessionSignals';
@@ -13,12 +13,13 @@ const TOTAL_QUESTIONS_ESTIMATE = 6;
 
 interface VoiceInterviewProps {
   resume: ResumeData;
-  persona: InterviewerPersona;
+  lastPersonaId?: string;
+  onPersonaPicked: (persona: { id: string; name: string }) => void;
   onFinish: (transcript: string[]) => void;
   onCancel: () => void;
 }
 
-const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFinish, onCancel }) => {
+const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, lastPersonaId, onPersonaPicked, onFinish, onCancel }) => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking' | 'idle'>('connecting');
   const [volume, setVolume] = useState(0);
@@ -55,6 +56,10 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
   // whether a deliberate reconnect is underway (to ignore the expected
   // onclose it triggers), and whether we've unmounted (to abort mid-flight).
   const resumeHandleRef = useRef<string | undefined>(undefined);
+  // Server-issued ids from the initial token mint; reconnect mints echo them
+  // so the locked system instruction/voice stay identical across sockets.
+  const sessionIdRef = useRef<string | null>(null);
+  const personaIdRef = useRef<string | null>(null);
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const isReconnectingRef = useRef(false);
   const isUnmountedRef = useRef(false);
@@ -103,7 +108,6 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
     isInitializedRef.current = true;
 
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -136,21 +140,27 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
 
       // Reconnectable: called on first connect and again on `goAway`, always
       // via sessionPromiseRef so the mic-audio sender below never targets a
-      // closed socket. `resumeHandle` opts into Live's session-resumption
-      // mechanism — passing `{}` (not omitting the field) is required even on
-      // the very first connect, since that's what makes the server start
-      // sending back the resumption handles we'll need later.
-      const connectLive = (resumeHandle?: string): Promise<any> => {
+      // closed socket. Ephemeral tokens are single-use, so every (re)connect
+      // mints a fresh one; everything except the resumption handle is locked
+      // into the token server-side. `sessionResumption: {}` (not omission) is
+      // required even on the very first connect — that's what makes the
+      // server start sending back the resumption handles we'll need later.
+      const connectLive = async (resumeHandle?: string): Promise<any> => {
+        const isReconnect = personaIdRef.current !== null;
+        const minted = await mintLiveToken(
+          isReconnect
+            ? { setup: resume, reconnect: true, sessionId: sessionIdRef.current!, personaId: personaIdRef.current! }
+            : { setup: resume, lastPersonaId }
+        );
+        if (!isReconnect) {
+          sessionIdRef.current = minted.sessionId;
+          personaIdRef.current = minted.personaId;
+          onPersonaPicked({ id: minted.personaId, name: minted.personaName });
+        }
+        const ai = new GoogleGenAI({ apiKey: minted.token, httpOptions: { apiVersion: 'v1alpha' } });
         return ai.live.connect({
-          model: MODELS.VOICE_INTERVIEWER,
+          model: minted.model,
           config: {
-            responseModalities: [Modality.AUDIO],
-            speechConfig: {
-              voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceId } }
-            },
-            systemInstruction: buildInterviewerSystemInstruction(resume, persona),
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
             sessionResumption: resumeHandle ? { handle: resumeHandle } : {}
           },
           callbacks: {
@@ -219,8 +229,13 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
                 const staleSession = await sessionPromiseRef.current;
                 staleSession?.close();
                 if (!isUnmountedRef.current) {
-                  sessionPromiseRef.current = connectLive(resumeHandleRef.current);
-                  sessionRef.current = await sessionPromiseRef.current;
+                  try {
+                    sessionPromiseRef.current = connectLive(resumeHandleRef.current);
+                    sessionRef.current = await sessionPromiseRef.current;
+                  } catch (err) {
+                    console.error('Reconnect failed (token mint or connect):', err);
+                    setStatus('idle');
+                  }
                 }
                 isReconnectingRef.current = false;
               }
@@ -258,7 +273,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, persona, onFini
       setIsConnecting(false);
       setStatus('idle');
     }
-  }, [resume, persona, flushBuffers]);
+  }, [resume, lastPersonaId, onPersonaPicked, flushBuffers]);
 
   useEffect(() => {
     startSession();
