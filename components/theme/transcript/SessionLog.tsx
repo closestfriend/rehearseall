@@ -3,6 +3,7 @@ import type { HistoryEntry } from '../../../types';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { toSessionRow } from '../sessionMapping';
 import { useIsMobile } from '../hooks';
+import { practiceTitle } from '../../../lib/practiceSetup';
 
 interface Props {
   history: HistoryEntry[];
@@ -25,7 +26,7 @@ const TranscriptSessionLog: React.FC<Props> = ({ history, onViewSession, onDelet
   const [filter, setFilter] = useState<FilterId>('all');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
 
-  const roles = useMemo(() => Array.from(new Set(history.map(h => h.resume.role))).sort(), [history]);
+  const roles = useMemo(() => Array.from(new Set(history.map(h => practiceTitle(h.resume)))).sort(), [history]);
 
   const stats = useMemo(() => {
     const scores = history.map(h => h.feedback.score);
@@ -48,7 +49,7 @@ const TranscriptSessionLog: React.FC<Props> = ({ history, onViewSession, onDelet
     let list = history;
     if (filter === 'voice') list = list.filter(h => h.mode === 'voice');
     else if (filter === 'text') list = list.filter(h => h.mode === 'text');
-    else if (filter === 'role' && roleFilter) list = list.filter(h => h.resume.role === roleFilter);
+    else if (filter === 'role' && roleFilter) list = list.filter(h => practiceTitle(h.resume) === roleFilter);
     return list.map(toSessionRow);
   }, [history, filter, roleFilter]);
 
@@ -62,7 +63,7 @@ const TranscriptSessionLog: React.FC<Props> = ({ history, onViewSession, onDelet
         {/* TOP BAR */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 10 : 0 }}>
           <button type="button" onClick={onBackToHome} style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em', background: 'none', border: 'none', color: '#1c1b18', fontFamily: 'inherit', cursor: 'pointer', padding: 0 }}>
-            HIREPREP_
+            REHEARSE_ALL_
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 26, fontSize: 12.5, color: '#6d685c', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             {!isMobile && (

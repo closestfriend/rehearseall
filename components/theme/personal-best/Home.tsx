@@ -4,6 +4,7 @@ import { INTERVIEWER_PERSONAS } from '../../../constants';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useCountUp, useReveal, useIsMobile } from '../hooks';
 import { toSessionRow } from '../sessionMapping';
+import { practiceTitle } from '../../../lib/practiceSetup';
 
 interface Props {
   history: HistoryEntry[];
@@ -13,7 +14,7 @@ interface Props {
 }
 
 const PERSONA_TICKER = INTERVIEWER_PERSONAS.map(p => p.name.toUpperCase()).join(' /// ');
-const TICKER_TEXT = `SIX INTERVIEWERS, DRAWN AT RANDOM → ${PERSONA_TICKER} /// REVEALED ONLY IN YOUR DEBRIEF /// `;
+const TICKER_TEXT = `SIX CONVERSATION STYLES, DRAWN AT RANDOM → ${PERSONA_TICKER} /// REVEALED ONLY IN YOUR DEBRIEF /// `;
 
 const RevealDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ style, children, ...rest }) => {
   const [ref, revealed] = useReveal<HTMLDivElement>();
@@ -47,8 +48,8 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
       {/* NAV */}
       <div style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '18px 48px', borderBottom: '1px solid #2a2d1a', background: 'rgba(16,18,8,.85)', backdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '0.02em' }}>HIREPREP</span>
+          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>R</span>
+          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '0.02em' }}>REHEARSE_ALL</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 32, fontSize: 13.5, fontWeight: 500, color: '#a9ad91' }}>
           {!isMobile && (
@@ -84,14 +85,14 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
         <div style={{ position: 'relative' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px solid #3a3e24', borderRadius: 999, padding: '7px 16px', fontSize: 12, letterSpacing: '0.14em', color: '#d4f222', marginBottom: 32 }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: '#d4f222', animation: 'hpBlink 2.2s ease-in-out infinite' }} />
-            TRAINING GROUND FOR INTERVIEWS
+            PRACTICE FOR CONVERSATIONS THAT MATTER
           </div>
           <h1 style={{ margin: 0, fontSize: 'clamp(2.25rem, 9vw, 6.5rem)', lineHeight: 0.96, fontWeight: 700, letterSpacing: '-0.035em', maxWidth: 920 }}>
-            Interview like you&apos;ve <span style={{ color: '#d4f222', animation: 'hpGlowPulse 4s ease-in-out infinite' }}>done it before.</span>
+            Practice the room <span style={{ color: '#d4f222', animation: 'hpGlowPulse 4s ease-in-out infinite' }}>before you enter it.</span>
           </h1>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 40, marginTop: 44, flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#a9ad91', maxWidth: 480 }}>
-              Because you will have. Reps against a tough, fair interviewer — then splits, scores, and exactly what to fix before the next rep.
+              Rehearse a high-stakes call, difficult conversation, pitch, interview, or anything else worth getting right. Then see what landed and what to sharpen.
             </p>
             <button
               type="button"
@@ -117,8 +118,8 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
         {[
           ['5–7', 'questions per session'],
           ['2', 'modes — voice & text'],
-          ['6', 'interviewer personas'],
-          ['/100', 'score calibrated to your level'],
+          ['6', 'conversation styles'],
+          ['/100', 'outcome-aware debrief'],
         ].map(([big, label], i) => (
           <div
             key={i}
@@ -140,9 +141,9 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
           <div style={{ fontSize: 12, letterSpacing: '0.2em', color: '#d4f222', marginBottom: 22 }}>THE WORKOUT</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[
-              ['01', 'Load your resume', 'PDF or paste. Add the job posting to train for a specific opening.'],
-              ['02', 'Run the rep', 'Live voice or written chat. Follow-ups probe what you actually said.'],
-              ['03', 'Read your splits', 'Score, strengths, weak moments — and rewritten answers to study.'],
+              ['01', 'Brief the room', 'Name who you are speaking with, what matters, and what a good outcome looks like.'],
+              ['02', 'Run the rehearsal', 'Live voice or written chat. Follow-ups respond to what you actually say.'],
+              ['03', 'Read the debrief', 'See what landed, what got in your way, and stronger language to try next time.'],
             ].map(([n, title, body], i) => (
               <div key={n} style={{ display: 'flex', gap: 20, padding: '18px 0', borderBottom: i < 2 ? '1px solid #2a2d1a' : undefined, alignItems: 'baseline' }}>
                 <span style={{ fontWeight: 700, color: '#d4f222', fontSize: 14, flex: 'none', width: 34 }}>{n}</span>
@@ -165,7 +166,7 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: isMobile ? 72 : 120, fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#d4f222', textShadow: '0 0 40px rgba(212,242,34,.4)' }}>{score}</span>
                 <div style={{ fontSize: 13, color: '#a9ad91', lineHeight: 1.6 }}>
-                  {lastEntry.resume.role}<br />
+                  {practiceTitle(lastEntry.resume)}<br />
                   vs. {lastEntry.personaName} · {new Date(lastEntry.date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}
                 </div>
               </div>
@@ -236,7 +237,7 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
         ) : (
           <div style={{ margin: isMobile ? '22px 20px 40px' : '22px 48px 40px', border: '1px dashed #3a3e24', padding: isMobile ? 28 : 44, textAlign: 'center' }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>No reps yet.</div>
-            <div style={{ fontSize: 13.5, color: '#a9ad91' }}>Your first session log entry is one interview away.</div>
+            <div style={{ fontSize: 13.5, color: '#a9ad91' }}>Your first rehearsal will create the first entry.</div>
           </div>
         )}
       </div>
@@ -245,14 +246,14 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
       <RevealDiv id="pricing" style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: isMobile ? 20 : 40, padding: isMobile ? '36px 20px' : '52px 48px', borderBottom: '1px solid #2a2d1a', scrollMarginTop: 80 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, flexWrap: 'wrap' }}>
           <span style={{ fontSize: isMobile ? 48 : 72, fontWeight: 700, letterSpacing: '-0.04em', color: '#d4f222', textShadow: '0 0 32px rgba(212,242,34,.35)' }}>$0</span>
-          <span style={{ fontSize: 14, color: '#a9ad91', maxWidth: 320, lineHeight: 1.5 }}>Unlimited reps while HirePrep is in preview. Sign in to keep your log across devices.</span>
+          <span style={{ fontSize: 14, color: '#a9ad91', maxWidth: 320, lineHeight: 1.5 }}>Unlimited reps while RehearseAll is in preview. Sign in to keep your log across devices.</span>
         </div>
         <span style={{ flex: 'none', border: '2px solid #d4f222', color: '#d4f222', padding: '16px 36px', fontSize: 15, fontWeight: 700, boxSizing: 'border-box', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>SIGN IN — FREE</span>
       </RevealDiv>
 
       {/* FOOTER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: isMobile ? '20px 20px' : '20px 48px', fontSize: 12.5, color: '#a9ad91' }}>
-        <span style={{ fontWeight: 700, color: '#f2f4e4' }}>HIREPREP</span>
+        <span style={{ fontWeight: 700, color: '#f2f4e4' }}>REHEARSE_ALL</span>
         <span>© 2026 · built with Gemini</span>
       </div>
     </div>

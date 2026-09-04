@@ -30,8 +30,8 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 40px', borderBottom: '1px solid #2a2d1a', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-          <span style={{ fontWeight: 700, fontSize: 15 }}>HIREPREP</span>
+          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>R</span>
+          <span style={{ fontWeight: 700, fontSize: 15 }}>REHEARSE_ALL</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 20 }}>
           {!isMobile && <span style={{ fontSize: 12, letterSpacing: '0.16em', color: '#a9ad91' }}>DEBRIEF</span>}
@@ -179,7 +179,7 @@ const PersonalBestDebrief: React.FC<DebriefProps> = (props) => {
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? 24 : 40, padding: isMobile ? '32px 20px' : 48, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: '-0.01em' }}>Run it again.</div>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: '#a9ad91' }}>Same role, fresh questions, new persona from the deck.</p>
+          <p style={{ margin: '8px 0 0', fontSize: 14, color: '#a9ad91' }}>Same situation, fresh turns, a new conversation style from the deck.</p>
         </div>
         <div style={{ display: 'flex', gap: 14, flex: 'none', flexWrap: 'wrap' }}>
           <button

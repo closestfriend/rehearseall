@@ -50,7 +50,7 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
         {/* TOP BAR */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flex: 'none', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 10 : 0 }}>
           <button type="button" onClick={onCancel} style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', color: '#1c1b18', padding: 0, fontFamily: 'inherit' }}>
-            HIREPREP_
+            REHEARSE_ALL_
           </button>
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11.5, letterSpacing: '0.18em', color: '#b3402a', fontWeight: 700 }}>
@@ -80,7 +80,7 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
           {messages.map((m, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: isMobile ? 4 : 18 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: m.role === 'user' ? '#b3402a' : '#1c1b18' }}>
-                {m.role === 'assistant' ? 'INTERVIEWER:' : 'YOU:'}
+                {m.role === 'assistant' ? 'COUNTERPART:' : 'YOU:'}
               </span>
               <span style={{ fontSize: 15, lineHeight: 1.75, color: m.role === 'assistant' ? '#1c1b18' : '#54503f' }}>
                 {m.content}
@@ -89,7 +89,7 @@ const TranscriptTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
           ))}
           {isTyping && (
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: isMobile ? 4 : 18 }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>COUNTERPART:</span>
               <span style={{ fontSize: 15, color: '#6d685c' }}>[preparing next question…]</span>
             </div>
           )}

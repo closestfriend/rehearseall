@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildEvaluatorPrompt } from './evaluatorPrompt';
-import type { ResumeData } from '../../types';
+import type { ConversationSetup, ResumeData } from '../../types';
 
 const RESUME: ResumeData = {
   text: 'Ten years in ML research.',
@@ -8,6 +8,14 @@ const RESUME: ResumeData = {
   experienceLevel: 'senior',
 };
 const TRANSCRIPT = 'INTERVIEWER: Hi.\nUSER REPLY #1: Hello.';
+const CONVERSATION: ConversationSetup = {
+  kind: 'conversation',
+  title: 'AI use and teenagers',
+  counterpart: "A physician at Nationwide Children's Hospital",
+  goal: 'Explain my research clearly and learn where medical context changes the problem.',
+  context: 'I research AI harms but feel out of depth in the medical world.',
+  concern: 'Missing the opportunity by sounding underprepared.',
+};
 
 describe('buildEvaluatorPrompt', () => {
   it('includes resume, role, experience, and the transcript', () => {
@@ -36,5 +44,16 @@ describe('buildEvaluatorPrompt', () => {
     expect(out).toContain('none provided');
     expect(out).toContain('do not penalize');
     expect(out).toContain(TRANSCRIPT);
+  });
+
+  it('builds an open-rehearsal brief from the conversation setup', () => {
+    const out = buildEvaluatorPrompt(CONVERSATION, TRANSCRIPT);
+    expect(out).toContain(`REHEARSAL: ${CONVERSATION.title}`);
+    expect(out).toContain(`COUNTERPART: ${CONVERSATION.counterpart}`);
+    expect(out).toContain(`DESIRED OUTCOME: ${CONVERSATION.goal}`);
+    expect(out).toContain(CONVERSATION.context);
+    expect(out).toContain(CONVERSATION.concern);
+    expect(out).toContain(TRANSCRIPT);
+    expect(out).not.toContain('RESUME:');
   });
 });

@@ -1,4 +1,5 @@
 import type { HistoryEntry } from '../../types';
+import { practiceDetail, practiceTitle } from '../../lib/practiceSetup';
 
 export interface SessionRow {
   entry: HistoryEntry;
@@ -16,8 +17,8 @@ export function toSessionRow(entry: HistoryEntry): SessionRow {
   const dd = String(d.getDate()).padStart(2, '0');
   return {
     entry,
-    role: entry.resume.role,
-    level: entry.resume.experienceLevel.toUpperCase(),
+    role: practiceTitle(entry.resume),
+    level: practiceDetail(entry.resume).toUpperCase(),
     persona: entry.personaName,
     score: entry.feedback.score,
     dateDot: `${mm}.${dd}`,

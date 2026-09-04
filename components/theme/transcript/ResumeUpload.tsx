@@ -18,6 +18,7 @@ interface ResumeUploadProps {
   onFileClear: () => void;
   onContinue: () => void;
   onSkip: () => void;
+  onUseOpenRehearsal: () => void;
   onBackToHome: () => void;
 }
 
@@ -46,6 +47,7 @@ const TranscriptResumeUpload: React.FC<ResumeUploadProps> = ({
   onFileClear,
   onContinue,
   onSkip,
+  onUseOpenRehearsal,
   onBackToHome,
 }) => {
   const { setTheme } = useTheme();
@@ -86,7 +88,7 @@ const TranscriptResumeUpload: React.FC<ResumeUploadProps> = ({
         {/* TOP BAR */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flex: 'none', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 10 : 0 }}>
           <button type="button" onClick={onBackToHome} style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', color: '#1c1b18', padding: 0, fontFamily: 'inherit' }}>
-            HIREPREP_
+            REHEARSE_ALL_
           </button>
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11.5, letterSpacing: '0.18em', color: '#6d685c', fontWeight: 700 }}>
@@ -305,15 +307,20 @@ const TranscriptResumeUpload: React.FC<ResumeUploadProps> = ({
 
             {/* ACTIONS */}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? 16 : 0, marginTop: 48, paddingTop: 26, borderTop: '1px dashed #b9b4a5' }}>
-              <button
-                type="button"
-                onClick={onSkip}
-                onMouseEnter={() => setHovered('skip')}
-                onMouseLeave={() => setHovered(null)}
-                style={{ fontSize: 12, color: hovered === 'skip' ? '#b3402a' : '#8a8471', transition: 'color .2s', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textAlign: isMobile ? 'center' : 'left', minHeight: isMobile ? 44 : undefined }}
-              >
-                proceed without exhibits →
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'stretch' : 'flex-start' }}>
+                <button type="button" onClick={onUseOpenRehearsal} style={{ fontSize: 12, color: '#b3402a', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textAlign: isMobile ? 'center' : 'left', minHeight: 32 }}>
+                  ← return to open rehearsal brief
+                </button>
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  onMouseEnter={() => setHovered('skip')}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{ fontSize: 12, color: hovered === 'skip' ? '#b3402a' : '#8a8471', transition: 'color .2s', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textAlign: isMobile ? 'center' : 'left', minHeight: 32 }}
+                >
+                  proceed without exhibits →
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={onContinue}

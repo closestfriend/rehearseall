@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:phone": "vite --mode lan-https",
-    "dev:full": "set -a; . ./.env.local 2>/dev/null; set +a; npx --yes vercel@56 dev",
+    "dev:full": "set -a; . ./.env.local 2>/dev/null; set +a; node scripts/dev-full.mjs",
+    "dev:vercel": "set -a; . ./.env.local 2>/dev/null; set +a; npx --yes vercel@56 dev",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

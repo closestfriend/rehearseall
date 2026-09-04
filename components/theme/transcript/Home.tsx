@@ -27,7 +27,7 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
 
         {/* NAV */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '16px 20px' : '18px 64px', borderBottom: '1px dashed #b9b4a5' }}>
-          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '0.06em' }}>HIREPREP_</span>
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '0.06em' }}>REHEARSE_ALL_</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 30, fontSize: 12.5, color: '#6d685c' }}>
             {!isMobile && (
               <>
@@ -61,11 +61,11 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
             </div>
           )}
           <div style={{ fontSize: 12, color: '#6d685c', marginBottom: isMobile ? 24 : 36 }}>
-            TRANSCRIPT OF PROCEEDINGS — MOCK INTERVIEW, CONFIDENTIAL<br />
-            IN RE: YOUR NEXT JOB
+            TRANSCRIPT OF PROCEEDINGS — PRIVATE REHEARSAL<br />
+            IN RE: THE CONVERSATION AHEAD
           </div>
           <h1 style={{ margin: 0, fontSize: 'clamp(2.25rem, 8vw, 4rem)', lineHeight: 1.12, fontWeight: 400, letterSpacing: '-0.02em', maxWidth: 940 }}>
-            The interview happened.<br />
+            The conversation happened.<br />
             <span style={{ background: '#1c1b18', color: '#fbfaf6', padding: '0 12px' }}>
               Nobody was <span style={{ whiteSpace: 'nowrap' }}>
                 watching.
@@ -76,7 +76,7 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
             </span>
           </h1>
           <p style={{ margin: isMobile ? '24px 0 0' : '38px 0 0', fontSize: 15, lineHeight: 1.8, color: '#54503f', maxWidth: 600 }}>
-            Rehearse the whole thing — the hard questions, the follow-ups, the awkward pause — with an interviewer who takes notes so you don&apos;t have to. Then read the record.
+            Rehearse the whole thing — the hard questions, the follow-ups, the awkward pause — with a responsive counterpart who keeps the record. Then read the debrief.
           </p>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 16 : 22, marginTop: isMobile ? 28 : 40 }}>
             <button
@@ -101,18 +101,18 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
           <div style={{ padding: isMobile ? '24px 20px 32px' : '44px 64px 52px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 26, maxWidth: 760 }}>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '110px 1fr', gap: isMobile ? 4 : 18 }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
-                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>Walk me through a project where the initial approach failed. What did you do next?</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>COUNTERPART:</span>
+                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>What makes you think this issue looks different for teenagers?</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '110px 1fr', gap: isMobile ? 4 : 18 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#b3402a' }}>YOU:</span>
                 <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>
-                  In my last role we shipped a caching layer that— <span style={{ background: '#efe9d5' }}>[answers 5–7 questions like this, out loud or typed]</span>
+                  The evidence we have suggests that— <span style={{ background: '#efe9d5' }}>[responds out loud or in writing]</span>
                 </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '110px 1fr', gap: isMobile ? 4 : 18 }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>INTERVIEWER:</span>
-                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>You said &quot;we.&quot; What was <em>your</em> decision in that moment?</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>COUNTERPART:</span>
+                <span style={{ fontSize: 14.5, lineHeight: 1.7, color: '#33301f' }}>Which part is evidence, and which part is your working hypothesis?</span>
               </div>
               <div style={{ fontSize: 12, color: '#6d685c', paddingLeft: isMobile ? 0 : 128 }}>— real follow-ups, generated from what you actually said</div>
             </div>
@@ -125,14 +125,14 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
           <div style={{ padding: isMobile ? '24px 20px 32px' : '44px 64px 52px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr', gap: isMobile ? 20 : 48, alignItems: 'start' }}>
             <div style={{ textAlign: isMobile ? 'left' : 'center' }}>
               <div style={{ fontSize: 'clamp(3.5rem, 14vw, 6rem)', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1 }}>82<span style={{ fontSize: 28, color: '#6d685c' }}>/100</span></div>
-              <div style={{ fontSize: 11.5, color: '#6d685c', marginTop: 8 }}>calibrated to role + level</div>
+              <div style={{ fontSize: 11.5, color: '#6d685c', marginTop: 8 }}>calibrated to your desired outcome</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 13.5, lineHeight: 1.7, color: '#33301f', maxWidth: 560 }}>
               <div>✓&nbsp; STRENGTHS — where your answers landed, quoted back to you</div>
               <div>✗&nbsp; GAPS — the moments that cost you, and why</div>
               <div>→&nbsp; REWRITES — stronger versions of your weakest answers</div>
               <div style={{ color: '#6d685c', fontSize: 12.5, marginTop: 6 }}>
-                Plus the reveal: which of six interviewer personas you drew. {revealedPersonas}, and {sealedCount} others remain sealed until the debrief.
+                Plus the reveal: which of six conversation styles you drew. {revealedPersonas}, and {sealedCount} others remain sealed until the debrief.
               </div>
             </div>
           </div>
@@ -202,7 +202,7 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
 
         {/* FOOTER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: isMobile ? '18px 20px' : '18px 64px', fontSize: 12, color: '#6d685c' }}>
-          <span>HIREPREP_</span>
+          <span>REHEARSE_ALL_</span>
           <span>certified true copy · © 2026</span>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup } from './_lib/validate';
-import { MODELS, getPersona, pickPersona, buildInterviewerSystemInstruction } from './_lib/prompts';
+import { MODELS, getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
 import type { ServerPersona } from './_lib/prompts';
 import type { LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
 
@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceId } },
             },
-            systemInstruction: buildInterviewerSystemInstruction(setup.value, persona),
+            systemInstruction: buildPracticeSystemInstruction(setup.value, persona),
             inputAudioTranscription: {},
             outputAudioTranscription: {},
           },

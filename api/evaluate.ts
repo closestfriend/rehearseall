@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
-import { MODELS, SYSTEM_INSTRUCTION_FEEDBACK } from './_lib/prompts';
+import { MODELS, getFeedbackSystemInstruction } from './_lib/prompts';
 import { buildEvaluatorPrompt } from './_lib/evaluatorPrompt';
 import { formatTranscriptForEvaluator } from './_lib/transcriptFormat';
 import type { EvaluateRequest } from '../lib/gatewayTypes';
@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         model,
         contents: prompt,
         config: {
-          systemInstruction: SYSTEM_INSTRUCTION_FEEDBACK,
+          systemInstruction: getFeedbackSystemInstruction(setup.value),
           responseMimeType: 'application/json',
           maxOutputTokens: 16384,
           responseSchema: FEEDBACK_SCHEMA,

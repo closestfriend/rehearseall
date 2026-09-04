@@ -18,6 +18,7 @@ interface ResumeUploadProps {
   onFileClear: () => void;
   onContinue: () => void;
   onSkip: () => void;
+  onUseOpenRehearsal: () => void;
   onBackToHome: () => void;
 }
 
@@ -53,6 +54,7 @@ const PersonalBestResumeUpload: React.FC<ResumeUploadProps> = ({
   onFileClear,
   onContinue,
   onSkip,
+  onUseOpenRehearsal,
   onBackToHome,
 }) => {
   const { setTheme } = useTheme();
@@ -91,8 +93,8 @@ const PersonalBestResumeUpload: React.FC<ResumeUploadProps> = ({
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? 10 : 0, padding: isMobile ? '14px 20px' : '16px 40px', borderBottom: '1px solid #2a2d1a', flex: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button type="button" onClick={onBackToHome} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4', fontFamily: 'inherit' }}>HIREPREP</span>
+            <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>R</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4', fontFamily: 'inherit' }}>REHEARSE_ALL</span>
           </button>
           {isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, letterSpacing: '0.16em', color: '#a9ad91' }}>
@@ -368,13 +370,18 @@ const PersonalBestResumeUpload: React.FC<ResumeUploadProps> = ({
 
         {/* ACTIONS */}
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? 18 : 0, marginTop: isMobile ? 40 : 52, paddingTop: 28, borderTop: '1px solid #2a2d1a' }}>
-          <button
-            type="button"
-            onClick={onSkip}
-            style={{ fontSize: 12.5, color: '#6d7157', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', minHeight: 44, textAlign: isMobile ? 'center' : 'left' }}
-          >
-            skip — run it without a resume →
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'stretch' : 'flex-start' }}>
+            <button type="button" onClick={onUseOpenRehearsal} style={{ fontSize: 12.5, color: '#d4f222', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', minHeight: 32, textAlign: isMobile ? 'center' : 'left' }}>
+              ← use the open rehearsal brief
+            </button>
+            <button
+              type="button"
+              onClick={onSkip}
+              style={{ fontSize: 12.5, color: '#6d7157', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', minHeight: 32, textAlign: isMobile ? 'center' : 'left' }}
+            >
+              skip — run it without a resume →
+            </button>
+          </div>
           <button
             type="button"
             onClick={onContinue}

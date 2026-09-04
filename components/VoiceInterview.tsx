@@ -2,24 +2,25 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { mintLiveToken } from '../services/apiClient';
-import { ResumeData } from '../types';
+import { PracticeSetup } from '../types';
 import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
 import { parseLiveSessionSignal } from '../lib/liveSessionSignals';
 import ThemedVoiceInterviewChrome from './theme/ThemedVoiceInterviewChrome';
+import { practiceDetail, practiceTitle } from '../lib/practiceSetup';
 
 // Rough proxy for "questions asked" (one interviewer turn ≈ one question) — the
 // client has no other way to know where Gemini is in its own 5-7 question plan.
 const TOTAL_QUESTIONS_ESTIMATE = 6;
 
 interface VoiceInterviewProps {
-  resume: ResumeData;
+  setup: PracticeSetup;
   lastPersonaId?: string;
   onPersonaPicked: (persona: { id: string; name: string }) => void;
   onFinish: (transcript: string[]) => void;
   onCancel: () => void;
 }
 
-const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, lastPersonaId, onPersonaPicked, onFinish, onCancel }) => {
+const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, onPersonaPicked, onFinish, onCancel }) => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking' | 'idle'>('connecting');
   const [volume, setVolume] = useState(0);
@@ -149,8 +150,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, lastPersonaId, 
         const isReconnect = personaIdRef.current !== null;
         const minted = await mintLiveToken(
           isReconnect
-            ? { setup: resume, reconnect: true, sessionId: sessionIdRef.current!, personaId: personaIdRef.current! }
-            : { setup: resume, lastPersonaId }
+            ? { setup, reconnect: true, sessionId: sessionIdRef.current!, personaId: personaIdRef.current! }
+            : { setup, lastPersonaId }
         );
         if (!isReconnect) {
           sessionIdRef.current = minted.sessionId;
@@ -273,7 +274,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, lastPersonaId, 
       setIsConnecting(false);
       setStatus('idle');
     }
-  }, [resume, lastPersonaId, onPersonaPicked, flushBuffers]);
+  }, [setup, lastPersonaId, onPersonaPicked, flushBuffers]);
 
   useEffect(() => {
     startSession();
@@ -384,8 +385,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ resume, lastPersonaId, 
   return (
     <>
       <ThemedVoiceInterviewChrome
-        roleLabel={resume.role}
-        levelLabel={resume.experienceLevel}
+        roleLabel={practiceTitle(setup)}
+        levelLabel={practiceDetail(setup)}
         status={status}
         isConnecting={isConnecting}
         volume={volume}

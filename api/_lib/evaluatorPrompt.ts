@@ -1,4 +1,4 @@
-import type { ResumeData } from '../../types';
+import type { PracticeSetup } from '../../types';
 
 /**
  * Assembles the user-prompt block sent to the evaluator model. Kept pure
@@ -6,9 +6,23 @@ import type { ResumeData } from '../../types';
  * DESCRIPTION line is included only when a non-empty JD is provided.
  */
 export function buildEvaluatorPrompt(
-  resume: ResumeData,
+  resume: PracticeSetup,
   chatTranscript: string
 ): string {
+  if (resume.kind === 'conversation') {
+    const concern = resume.concern?.trim()
+      ? `\n      PRESSURE POINT: ${resume.concern.trim()}`
+      : '';
+    return `
+      REHEARSAL: ${resume.title}
+      COUNTERPART: ${resume.counterpart}
+      DESIRED OUTCOME: ${resume.goal}
+      CONTEXT: ${resume.context.trim() || 'none provided'}${concern}
+
+      REHEARSAL TRANSCRIPT:
+      ${chatTranscript}
+    `;
+  }
   const jd = resume.jobDescription?.trim();
   const jdLine = jd ? `\n      JOB DESCRIPTION: ${jd}` : '';
   const resumeLine = resume.text.trim()

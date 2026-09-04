@@ -3,6 +3,7 @@ import type { HistoryEntry } from '../../../types';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useReveal, useIsMobile } from '../hooks';
 import { toSessionRow } from '../sessionMapping';
+import { practiceTitle } from '../../../lib/practiceSetup';
 
 interface Props {
   history: HistoryEntry[];
@@ -43,7 +44,7 @@ const PersonalBestSessionLog: React.FC<Props> = ({ history, onViewSession, onDel
   const [filter, setFilter] = useState<FilterId>('all');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
 
-  const roles = useMemo(() => Array.from(new Set(history.map(h => h.resume.role))).sort(), [history]);
+  const roles = useMemo(() => Array.from(new Set(history.map(h => practiceTitle(h.resume)))).sort(), [history]);
 
   const stats = useMemo(() => {
     const scores = history.map(h => h.feedback.score);
@@ -66,7 +67,7 @@ const PersonalBestSessionLog: React.FC<Props> = ({ history, onViewSession, onDel
     let list = history;
     if (filter === 'voice') list = list.filter(h => h.mode === 'voice');
     else if (filter === 'text') list = list.filter(h => h.mode === 'text');
-    else if (filter === 'role' && roleFilter) list = list.filter(h => h.resume.role === roleFilter);
+    else if (filter === 'role' && roleFilter) list = list.filter(h => practiceTitle(h.resume) === roleFilter);
     return list.map(toSessionRow);
   }, [history, filter, roleFilter]);
 
@@ -82,8 +83,8 @@ const PersonalBestSessionLog: React.FC<Props> = ({ history, onViewSession, onDel
           onClick={onBackToHome}
           style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-          <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>HIREPREP</span>
+          <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>R</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>REHEARSE_ALL</span>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 28, fontSize: 13, fontWeight: 500, color: '#a9ad91' }}>
           {!isMobile && (
@@ -239,7 +240,7 @@ const PersonalBestSessionLog: React.FC<Props> = ({ history, onViewSession, onDel
       ) : (
         <div style={{ margin: isMobile ? '28px 20px' : '48px', border: '1px dashed #3a3e24', padding: isMobile ? 36 : 64, textAlign: 'center' }}>
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>No reps yet.</div>
-          <div style={{ fontSize: 14, color: '#a9ad91', marginBottom: 28 }}>Your first session log entry is one interview away.</div>
+          <div style={{ fontSize: 14, color: '#a9ad91', marginBottom: 28 }}>Your first session log entry is one rehearsal away.</div>
           <button
             type="button"
             onClick={onStartInterview}
