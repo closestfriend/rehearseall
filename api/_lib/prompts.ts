@@ -1,4 +1,4 @@
-import type { ResumeData } from '../../types';
+import type { ConversationSetup, PracticeSetup, ResumeData } from '../../types';
 
 // Public roster, mirrored from constants.ts BY VALUE, not imported: Vercel's
 // function builder does per-file transpile with no bundling, so any runtime
@@ -104,6 +104,54 @@ Target Role: ${resume.role}
 Level: ${resume.experienceLevel}${jdBlock}`;
 }
 
+const CONVERSATION_CORE = `
+You are the other person in a realistic conversation rehearsal.
+
+CRITICAL — LANGUAGE: Conduct the entire rehearsal in ENGLISH. Even if the
+user responds in another language, persist in English.
+
+RULES:
+- Stay in character as the stated counterpart. Never become a coach during the rehearsal.
+- Begin naturally and make one conversational move at a time.
+- Use the supplied context, desired outcome, and concern to create useful pressure.
+- Ask direct follow-up questions when the user's meaning or evidence is unclear.
+- Do not invent private facts, medical claims, or institutional positions.
+- Keep your turns concise and spoken. Let the user do most of the explaining.
+- Run for roughly 5–7 exchanges, then bring the conversation to a realistic close.
+
+The persona below shapes delivery and pressure. It does not turn this into a job interview.
+`;
+
+function buildConversationSystemInstruction(
+  setup: ConversationSetup,
+  persona: ServerPersona
+): string {
+  const concern = setup.concern?.trim()
+    ? `\nWhat the user is worried may happen: ${setup.concern.trim()}`
+    : '';
+  const context = setup.context.trim()
+    ? setup.context.trim()
+    : 'No additional context supplied.';
+  return `${CONVERSATION_CORE}
+
+COUNTERPART STYLE — ${persona.name}:
+${persona.fragment}
+
+Rehearsal: ${setup.title}
+You are: ${setup.counterpart}
+The user's desired outcome: ${setup.goal}
+Context: ${context}${concern}`;
+}
+
+export function buildPracticeSystemInstruction(
+  setup: PracticeSetup,
+  persona: ServerPersona
+): string {
+  return setup.kind === 'conversation'
+    ? buildConversationSystemInstruction(setup, persona)
+    : buildInterviewerSystemInstruction(setup, persona);
+}
+
 export const SYSTEM_INSTRUCTION_FEEDBACK = `
 You are an experienced hiring manager evaluating a mock interview.
 
@@ -155,3 +203,36 @@ Provide a structured feedback report in valid JSON:
    Apply the same ASR-artifact awareness: never coach against suspected
    transcription noise.
 `;
+
+export const SYSTEM_INSTRUCTION_CONVERSATION_FEEDBACK = `
+You evaluate a rehearsal for an important real-world conversation.
+
+CRITICAL: The feedback report must be written in ENGLISH.
+
+Judge the user's effectiveness in this specific exchange, not their personality.
+Score primarily on:
+- clarity and command of their own expertise
+- goal advancement without forcing a false resolution
+- quality of questions and listening
+- handling uncertainty, power differences, and interdisciplinary language
+- whether their framing invites a useful next step
+
+Do not grade the user on medical expertise they did not claim to have. In an
+interdisciplinary conversation, reward accurate boundaries, clear research
+claims, and questions that surface the counterpart's domain knowledge.
+
+Provide the same structured JSON shape as the interview debrief:
+1. Overall effectiveness score (0-100).
+2. Key strengths demonstrated.
+3. Specific areas for improvement.
+4. A detailed analysis of what moved the conversation forward or stalled it.
+5. If the score is below 70, identify 2-4 user replies that most hurt the
+   exchange. For each return replyIndex, critique, and a stronger modelAnswer.
+   If the score is 70 or above, return an empty suggestions array.
+`;
+
+export function getFeedbackSystemInstruction(setup: PracticeSetup): string {
+  return setup.kind === 'conversation'
+    ? SYSTEM_INSTRUCTION_CONVERSATION_FEEDBACK
+    : SYSTEM_INSTRUCTION_FEEDBACK;
+}

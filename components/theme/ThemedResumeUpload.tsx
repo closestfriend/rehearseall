@@ -19,6 +19,7 @@ interface Props {
   onFileClear: () => void;
   onContinue: () => void;
   onSkip: () => void;
+  onUseOpenRehearsal: () => void;
   onBackToHome: () => void;
 }
 

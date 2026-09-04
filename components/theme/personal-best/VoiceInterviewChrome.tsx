@@ -25,7 +25,7 @@ interface VoiceInterviewChromeProps {
 const STATUS_LABEL: Record<VoiceInterviewChromeProps['status'], string> = {
   connecting: 'CONNECTING',
   listening: 'YOUR MIC IS LIVE',
-  speaking: 'INTERVIEWER SPEAKING',
+  speaking: 'COUNTERPART SPEAKING',
   idle: 'STANDING BY',
 };
 
@@ -91,7 +91,7 @@ const PersonalBestVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button type="button" onClick={onCancel} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>HIREPREP</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>REHEARSE_ALL</span>
           </button>
           {isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, letterSpacing: '0.16em', color: '#d4f222' }}>
@@ -168,7 +168,7 @@ const PersonalBestVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
         </div>
 
         <p style={{ margin: 0, fontSize: isMobile ? 20 : 28, lineHeight: 1.4, fontWeight: 500, maxWidth: 720, textAlign: 'center' }}>
-          {liveTranscript ? `"${liveTranscript}"` : isConnecting ? 'Getting the interviewer on the line…' : ' '}
+          {liveTranscript ? `"${liveTranscript}"` : isConnecting ? 'Getting your rehearsal partner on the line…' : ' '}
         </p>
 
         <WaveformBars active={speaking} />

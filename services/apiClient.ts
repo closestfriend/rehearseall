@@ -1,4 +1,4 @@
-import type { ResumeData, InterviewMessage, InterviewFeedback } from '../types';
+import type { PracticeSetup, InterviewMessage } from '../types';
 import type { GatewayError, ChatRequest, ChatResponse, EvaluateRequest, EvaluateResponse, LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
 
 // '' = same-origin (deployed + vercel dev). Set VITE_API_BASE to a deployed
@@ -37,7 +37,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 export function evaluateInterview(
-  setup: ResumeData,
+  setup: PracticeSetup,
   transcript: InterviewMessage[]
 ): Promise<EvaluateResponse> {
   const body: EvaluateRequest = { setup, transcript };

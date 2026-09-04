@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 
 // Mirrors the Personal Best reference's counter easing exactly: 1.4s, cubic ease-out.
 export function useCountUp(target: number, active: boolean): number {
@@ -27,7 +28,7 @@ export function useCountUp(target: number, active: boolean): number {
 // Fires once when the element first enters the viewport (threshold 0.25), with a
 // timeout fallback in case IntersectionObserver never fires, matching the
 // Personal Best reference's force-complete guard.
-export function useReveal<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
+export function useReveal<T extends HTMLElement>(): [RefObject<T>, boolean] {
   const ref = useRef<T>(null);
   const [revealed, setRevealed] = useState(false);
 

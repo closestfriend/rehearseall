@@ -11,7 +11,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div style={{ maxWidth: 1240, margin: '0 auto', background: '#fbfaf6', boxShadow: '0 2px 24px rgba(28,27,24,.12)' }}>
         {/* TOP BAR */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 8 : 0 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em' }}>HIREPREP_</span>
+          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em' }}>REHEARSE_ALL_</span>
           {!isMobile && <span style={{ fontSize: 11.5, letterSpacing: '0.18em', color: '#6d685c' }}>FINDINGS OF THE EXAMINER</span>}
           <button
             type="button"

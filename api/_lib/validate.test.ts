@@ -2,12 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { validateSetup, validateMessages, LIMITS } from './validate';
 
 const SETUP = { text: 'resume text', role: 'Engineer', experienceLevel: 'mid' };
+const CONVERSATION_SETUP = {
+  kind: 'conversation',
+  title: 'AI use and teenagers',
+  counterpart: "A physician at Nationwide Children's Hospital",
+  goal: 'Explain my research clearly and learn where medical context changes the problem.',
+  context: 'I research AI harms and want a productive interdisciplinary exchange.',
+  concern: 'I may use language that sounds naive in a clinical setting.',
+};
 
 describe('validateSetup', () => {
   it('accepts a minimal valid setup', () => {
     const r = validateSetup(SETUP);
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.value.role).toBe('Engineer');
+    if (r.ok) expect('role' in r.value && r.value.role).toBe('Engineer');
   });
 
   it('accepts an empty resume text (no-resume flow) and optional JD', () => {
@@ -30,6 +38,20 @@ describe('validateSetup', () => {
     const r = validateSetup({ ...SETUP, sneaky: 'payload' });
     expect(r.ok).toBe(true);
     if (r.ok) expect('sneaky' in r.value).toBe(false);
+  });
+
+  it('accepts and normalizes an open conversation rehearsal', () => {
+    const r = validateSetup(CONVERSATION_SETUP);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value).toEqual(CONVERSATION_SETUP);
+    }
+  });
+
+  it('requires a title, counterpart, and goal for an open rehearsal', () => {
+    expect(validateSetup({ ...CONVERSATION_SETUP, title: '   ' }).ok).toBe(false);
+    expect(validateSetup({ ...CONVERSATION_SETUP, counterpart: '' }).ok).toBe(false);
+    expect(validateSetup({ ...CONVERSATION_SETUP, goal: undefined }).ok).toBe(false);
   });
 });
 

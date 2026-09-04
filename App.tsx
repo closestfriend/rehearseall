@@ -4,20 +4,32 @@ import InterviewChat from './components/InterviewChat';
 import VoiceInterview from './components/VoiceInterview';
 import ThemedHome from './components/theme/ThemedHome';
 import ThemedResumeUpload from './components/theme/ThemedResumeUpload';
+import ThemedConversationSetup from './components/theme/ThemedConversationSetup';
 import ThemedModePicker from './components/theme/ThemedModePicker';
 import ThemedDebrief from './components/theme/ThemedDebrief';
 import ThemedSessionLog from './components/theme/ThemedSessionLog';
-import { AppStage, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry } from './types';
+import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry, PracticeSetup } from './types';
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { LAST_PERSONA_STORAGE_KEY } from './constants';
+import { isConversationSetup, practiceDetail, practiceTitle } from './lib/practiceSetup';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
 const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.LANDING);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [practiceKind, setPracticeKind] = useState<'conversation' | 'interview'>('conversation');
+  const [conversationData, setConversationData] = useState<ConversationSetup>({
+    kind: 'conversation',
+    title: '',
+    counterpart: '',
+    goal: '',
+    context: '',
+    concern: '',
+  });
   const [resumeData, setResumeData] = useState<ResumeData>({
+    kind: 'interview',
     text: '',
     role: '',
     experienceLevel: 'mid',
@@ -43,6 +55,7 @@ const App: React.FC = () => {
   // AudioContexts, marks the session unmounted) and kills audio after the
   // very first mint.
   const [pinnedLastPersonaId, setPinnedLastPersonaId] = useState<string | undefined>(undefined);
+  const activeSetup: PracticeSetup = practiceKind === 'conversation' ? conversationData : resumeData;
 
   // Load history on mount
   useEffect(() => {
@@ -70,7 +83,9 @@ const App: React.FC = () => {
   };
 
   const handleStartResume = () => {
-    setResumeData({ text: '', role: '', experienceLevel: 'mid' });
+    setPracticeKind('conversation');
+    setConversationData({ kind: 'conversation', title: '', counterpart: '', goal: '', context: '', concern: '' });
+    setResumeData({ kind: 'interview', text: '', role: '', experienceLevel: 'mid' });
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
@@ -81,7 +96,15 @@ const App: React.FC = () => {
   // pulls its resume/role/JD into the form (history card path); without one,
   // resumeData already reflects the report on screen (feedback screen path).
   const startPracticeAgain = (entry?: HistoryEntry) => {
-    if (entry) setResumeData(entry.resume);
+    if (entry) {
+      if (isConversationSetup(entry.resume)) {
+        setPracticeKind('conversation');
+        setConversationData(entry.resume);
+      } else {
+        setPracticeKind('interview');
+        setResumeData(entry.resume);
+      }
+    }
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
@@ -130,9 +153,14 @@ const App: React.FC = () => {
   }, []);
 
   const handleSetupContinue = () => {
-    if (!resumeData.role.trim()) return;
-    const jd = resumeData.jobDescription?.trim();
-    setResumeData({ ...resumeData, jobDescription: jd || undefined });
+    if (practiceKind === 'conversation') {
+      if (!conversationData.title.trim() || !conversationData.counterpart.trim() || !conversationData.goal.trim()) return;
+      setConversationData(prev => ({ ...prev, concern: prev.concern?.trim() || undefined }));
+    } else {
+      if (!resumeData.role.trim()) return;
+      const jd = resumeData.jobDescription?.trim();
+      setResumeData({ ...resumeData, jobDescription: jd || undefined });
+    }
     setStage(AppStage.INTERVIEW_MODE);
   };
 
@@ -153,7 +181,7 @@ const App: React.FC = () => {
     setStage(AppStage.FEEDBACK);
     setCurrentTranscript(messages);
     try {
-      const result = await evaluateInterview(resumeData, messages);
+      const result = await evaluateInterview(activeSetup, messages);
       setFeedback(result);
 
       // currentPersona is set by onPersonaPicked when the server's first
@@ -165,7 +193,7 @@ const App: React.FC = () => {
       const entry: HistoryEntry = {
         id: crypto.randomUUID(),
         date: Date.now(),
-        resume: { ...resumeData },
+        resume: { ...activeSetup },
         transcript: messages,
         feedback: result,
         personaName,
@@ -188,7 +216,13 @@ const App: React.FC = () => {
   };
 
   const viewHistoryItem = (entry: HistoryEntry) => {
-    setResumeData(entry.resume);
+    if (isConversationSetup(entry.resume)) {
+      setPracticeKind('conversation');
+      setConversationData(entry.resume);
+    } else {
+      setPracticeKind('interview');
+      setResumeData(entry.resume);
+    }
     setFeedback(entry.feedback);
     setCurrentTranscript(entry.transcript);
     setDisplayPersonaName(entry.personaName ?? null);
@@ -200,14 +234,16 @@ const App: React.FC = () => {
     if (!feedback) return;
 
     const isoDate = new Date().toISOString().slice(0, 10);
-    const slug = (resumeData.role || 'interview').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const title = practiceTitle(activeSetup);
+    const detail = practiceDetail(activeSetup);
+    const slug = (title || 'rehearsal').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
     const strengthsMd = feedback.strengths.map(s => `- ${s}`).join('\n');
     const improvementsMd = feedback.improvements.map(s => `- ${s}`).join('\n');
     const transcriptMd = buildTranscriptMarkdown(currentTranscript, feedback.suggestions);
 
-    const md = `# Interview Report — ${resumeData.role} (${resumeData.experienceLevel})
-**Date:** ${isoDate} · **Score:** ${feedback.score}/100${displayPersonaName ? ` · **Interviewer:** ${displayPersonaName}` : ''}
+    const md = `# Rehearsal Debrief — ${title}
+**Date:** ${isoDate} · **Context:** ${detail} · **Score:** ${feedback.score}/100${displayPersonaName ? ` · **Rehearsal partner:** ${displayPersonaName}` : ''}
 
 ## Key Strengths
 ${strengthsMd}
@@ -226,14 +262,40 @@ ${transcriptMd}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `interview-${slug}-${isoDate}.md`;
+    a.download = `rehearsal-${slug}-${isoDate}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  const renderResumeUpload = () => (
+  const loadClinicianExample = () => setConversationData({
+    kind: 'conversation',
+    title: 'AI and teenagers research call',
+    counterpart: "A doctor and researcher at Nationwide Children's Hospital",
+    goal: 'Build shared language across AI-harms research and clinical practice, learn which concerns matter most in adolescent care, and leave with a useful next step for continued collaboration.',
+    context: 'I am a researcher who studies AI and AI harms. I understand the technology and its social risks, but I am less fluent in the medical and clinical world. This is an exploratory professional call about teenagers’ use of AI, where our perspectives may complement each other.',
+    concern: 'I do not want to overstate medical knowledge, flatten clinical nuance, or spend the call proving expertise instead of asking good questions.',
+  });
+
+  const renderSetup = () => practiceKind === 'conversation' ? (
+    <ThemedConversationSetup
+      title={conversationData.title}
+      onTitleChange={(title) => setConversationData(prev => ({ ...prev, title }))}
+      counterpart={conversationData.counterpart}
+      onCounterpartChange={(counterpart) => setConversationData(prev => ({ ...prev, counterpart }))}
+      goal={conversationData.goal}
+      onGoalChange={(goal) => setConversationData(prev => ({ ...prev, goal }))}
+      context={conversationData.context}
+      onContextChange={(context) => setConversationData(prev => ({ ...prev, context }))}
+      concern={conversationData.concern ?? ''}
+      onConcernChange={(concern) => setConversationData(prev => ({ ...prev, concern }))}
+      onLoadExample={loadClinicianExample}
+      onUseInterviewPreset={() => setPracticeKind('interview')}
+      onContinue={handleSetupContinue}
+      onBackToHome={() => setStage(AppStage.LANDING)}
+    />
+  ) : (
     <ThemedResumeUpload
       role={resumeData.role}
       onRoleChange={(v) => setResumeData(prev => ({ ...prev, role: v }))}
@@ -254,14 +316,15 @@ ${transcriptMd}
       onFileClear={handleFileClear}
       onContinue={handleSetupContinue}
       onSkip={handleSetupSkip}
+      onUseOpenRehearsal={() => setPracticeKind('conversation')}
       onBackToHome={() => setStage(AppStage.LANDING)}
     />
   );
 
   const renderInterviewMode = () => (
     <ThemedModePicker
-      roleLabel={resumeData.role}
-      levelLabel={resumeData.experienceLevel}
+      roleLabel={practiceTitle(activeSetup)}
+      levelLabel={practiceDetail(activeSetup)}
       mode={selectedMode}
       onModeChange={setSelectedMode}
       onStart={() => startInterview(selectedMode === 'voice' ? AppStage.INTERVIEWING_VOICE : AppStage.INTERVIEWING_TEXT)}
@@ -294,11 +357,11 @@ ${transcriptMd}
           onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
         />
       );
-      case AppStage.RESUME_UPLOAD: return renderResumeUpload();
+      case AppStage.RESUME_UPLOAD: return renderSetup();
       case AppStage.INTERVIEW_MODE: return renderInterviewMode();
       case AppStage.INTERVIEWING_TEXT: return (
         <InterviewChat
-          resume={resumeData}
+          setup={activeSetup}
           lastPersonaId={pinnedLastPersonaId}
           onPersonaPicked={handlePersonaPicked}
           onFinish={processInterviewResults}
@@ -307,7 +370,7 @@ ${transcriptMd}
       );
       case AppStage.INTERVIEWING_VOICE: return (
         <VoiceInterview
-          resume={resumeData}
+          setup={activeSetup}
           lastPersonaId={pinnedLastPersonaId}
           onPersonaPicked={handlePersonaPicked}
           onFinish={(transcript) => processInterviewResults(transcript.map(t => ({
@@ -324,8 +387,8 @@ ${transcriptMd}
           errorMessage={feedbackError ?? undefined}
           onRetry={retryFeedback}
           score={feedback?.score}
-          roleLabel={resumeData.role}
-          levelLabel={resumeData.experienceLevel}
+          roleLabel={practiceTitle(activeSetup)}
+          levelLabel={practiceDetail(activeSetup)}
           questionCount={currentTranscript.filter(m => m.role === 'assistant').length}
           modeLabel={currentMode ?? undefined}
           personaName={displayPersonaName}

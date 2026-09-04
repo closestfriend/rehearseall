@@ -75,7 +75,7 @@ const PersonalBestModePicker: React.FC<ModePickerProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>HIREPREP</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>REHEARSE_ALL</span>
           </div>
           {isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, letterSpacing: '0.16em', color: '#a9ad91' }}>
@@ -127,7 +127,7 @@ const PersonalBestModePicker: React.FC<ModePickerProps> = ({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: isMobile ? '36px 20px 40px' : '56px 40px', maxWidth: 1100, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
         <h1 style={{ margin: '0 0 14px', fontSize: 'clamp(2rem, 6vw, 2.75rem)', lineHeight: 1.02, letterSpacing: '-0.03em', fontWeight: 700 }}>Pick your event.</h1>
         <p style={{ margin: isMobile ? '0 0 32px' : '0 0 44px', fontSize: 15, lineHeight: 1.6, color: '#a9ad91', maxWidth: 560 }}>
-          Same interviewer, same debrief. Voice trains pacing under pressure; text lets you think before you commit.
+          Same situation, same debrief. Voice trains pacing in the moment; text lets you think before you commit.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 20 : 28, alignItems: 'stretch' }}>

@@ -1,10 +1,22 @@
 
 export interface ResumeData {
+  kind?: 'interview';
   text: string;
   role: string;
   experienceLevel: string;
   jobDescription?: string;
 }
+
+export interface ConversationSetup {
+  kind: 'conversation';
+  title: string;
+  counterpart: string;
+  goal: string;
+  context: string;
+  concern?: string;
+}
+
+export type PracticeSetup = ResumeData | ConversationSetup;
 
 export interface InterviewMessage {
   role: 'user' | 'assistant';
@@ -29,7 +41,8 @@ export interface InterviewFeedback {
 export interface HistoryEntry {
   id: string;
   date: number;
-  resume: ResumeData;
+  /** `resume` is retained for compatibility with existing local history. */
+  resume: PracticeSetup;
   transcript: InterviewMessage[];
   feedback: InterviewFeedback;
   personaName: string;

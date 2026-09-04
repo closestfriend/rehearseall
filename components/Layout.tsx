@@ -16,7 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">HirePrep AI</span>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">RehearseAll</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Features</a>
@@ -33,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-white border-t border-gray-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-500 text-sm">
-            © 2024 HirePrep AI. Built with Google Gemini.
+            © 2026 RehearseAll. Built with Google Gemini.
           </div>
         </div>
       </footer>

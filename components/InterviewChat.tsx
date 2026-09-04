@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { InterviewMessage, ResumeData } from '../types';
+import { InterviewMessage, PracticeSetup } from '../types';
 import { sendChatTurn, GatewayRequestError } from '../services/apiClient';
 import ThemedTextInterviewChrome from './theme/ThemedTextInterviewChrome';
+import { practiceDetail, practiceTitle } from '../lib/practiceSetup';
 
 interface InterviewChatProps {
-  resume: ResumeData;
+  setup: PracticeSetup;
   lastPersonaId?: string;
   onPersonaPicked: (persona: { id: string; name: string }) => void;
   onFinish: (transcript: InterviewMessage[]) => void;
@@ -13,7 +14,7 @@ interface InterviewChatProps {
 }
 
 const InterviewChat: React.FC<InterviewChatProps> = ({
-  resume, lastPersonaId, onPersonaPicked, onFinish, onCancel,
+  setup, lastPersonaId, onPersonaPicked, onFinish, onCancel,
 }) => {
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [input, setInput] = useState('');
@@ -34,14 +35,14 @@ const InterviewChat: React.FC<InterviewChatProps> = ({
     setInitFailed(false);
     setIsTyping(true);
     try {
-      const res = await sendChatTurn({ setup: resume, messages: [], lastPersonaId });
+      const res = await sendChatTurn({ setup, messages: [], lastPersonaId });
       sessionRef.current = { sessionId: res.sessionId, personaId: res.personaId };
       onPersonaPicked({ id: res.personaId, name: res.personaName });
       setMessages([{ role: 'assistant', content: res.reply, timestamp: Date.now() }]);
     } catch (err) {
       console.error('Chat init error:', err);
       setInitFailed(true);
-      setErrorNotice(err instanceof GatewayRequestError ? err.message : 'Could not reach the interviewer. Check your connection and try again.');
+      setErrorNotice(err instanceof GatewayRequestError ? err.message : 'Could not reach your rehearsal partner. Check your connection and try again.');
     } finally {
       setIsTyping(false);
     }
@@ -51,7 +52,7 @@ const InterviewChat: React.FC<InterviewChatProps> = ({
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
     runInit();
-  }, [resume, lastPersonaId, onPersonaPicked]);
+  }, [setup, lastPersonaId, onPersonaPicked]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +65,12 @@ const InterviewChat: React.FC<InterviewChatProps> = ({
     setIsTyping(true);
 
     try {
-      const res = await sendChatTurn({ setup: resume, messages: history, ...sessionRef.current });
+      const res = await sendChatTurn({ setup, messages: history, ...sessionRef.current });
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply, timestamp: Date.now() }]);
       setErrorNotice(null);
     } catch (err) {
       console.error('Chat error:', err);
-      setErrorNotice(err instanceof GatewayRequestError ? err.message : 'Could not reach the interviewer. Check your connection and try again.');
+      setErrorNotice(err instanceof GatewayRequestError ? err.message : 'Could not reach your rehearsal partner. Check your connection and try again.');
     } finally {
       setIsTyping(false);
     }
@@ -77,8 +78,8 @@ const InterviewChat: React.FC<InterviewChatProps> = ({
 
   return (
     <ThemedTextInterviewChrome
-      roleLabel={resume.role}
-      levelLabel={resume.experienceLevel}
+      roleLabel={practiceTitle(setup)}
+      levelLabel={practiceDetail(setup)}
       messages={messages}
       isTyping={isTyping}
       input={input}

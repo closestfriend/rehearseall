@@ -62,7 +62,7 @@ const TranscriptModePicker: React.FC<ModePickerProps> = ({
 
         {/* TOP BAR */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '14px 20px' : '16px 64px', borderBottom: '1px dashed #b9b4a5', flex: 'none', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 10 : 0 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em' }}>HIREPREP_</span>
+          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em' }}>REHEARSE_ALL_</span>
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11.5, letterSpacing: '0.18em', color: '#6d685c', fontWeight: 700 }}>
               <span style={{ width: 8, height: 8, borderRadius: 99, background: '#6d685c', animation: 'hpPulseFade 1.4s ease-in-out infinite' }} />
@@ -122,7 +122,7 @@ const TranscriptModePicker: React.FC<ModePickerProps> = ({
               Elect the form <span style={{ background: '#1c1b18', color: '#fbfaf6', padding: '0 10px' }}>of proceedings.</span>
             </h1>
             <p style={{ margin: isMobile ? '0 0 28px' : '0 0 40px', fontSize: 13.5, lineHeight: 1.8, color: '#54503f', maxWidth: 560 }}>
-              Same examiner, same record, same findings. Only the manner of testimony differs.
+              Same situation, same record, same findings. Only the manner of rehearsal differs.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 28, alignItems: 'stretch' }}>

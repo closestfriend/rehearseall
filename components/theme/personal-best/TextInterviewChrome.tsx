@@ -51,7 +51,7 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button type="button" onClick={onCancel} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <span style={{ width: 26, height: 26, background: '#d4f222', display: 'grid', placeItems: 'center', color: '#101208', fontWeight: 700, fontSize: 15 }}>H</span>
-            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>HIREPREP</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: '#f2f4e4' }}>REHEARSE_ALL</span>
           </button>
           {isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, letterSpacing: '0.16em', color: '#d4f222' }}>
@@ -85,7 +85,7 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
           isMobile ? (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: m.role === 'assistant' ? '#d4f222' : '#a9ad91' }}>
-                {m.role === 'assistant' ? 'INTERVIEWER' : 'YOU'}
+                {m.role === 'assistant' ? 'COUNTERPART' : 'YOU'}
               </span>
               <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: m.role === 'assistant' ? '#f2f4e4' : '#a9ad91' }}>
                 {m.content}
@@ -94,7 +94,7 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
           ) : (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: `${labelColWidth}px 1fr`, gap: 20 }}>
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: m.role === 'assistant' ? '#d4f222' : '#a9ad91', paddingTop: 3 }}>
-                {m.role === 'assistant' ? 'INTERVIEWER' : 'YOU'}
+                {m.role === 'assistant' ? 'COUNTERPART' : 'YOU'}
               </span>
               <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: m.role === 'assistant' ? '#f2f4e4' : '#a9ad91' }}>
                 {m.content}
@@ -105,12 +105,12 @@ const PersonalBestTextInterviewChrome: React.FC<TextInterviewChromeProps> = ({
         {isTyping && (
           isMobile ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#d4f222' }}>INTERVIEWER</span>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#d4f222' }}>COUNTERPART</span>
               <span style={{ fontSize: 15.5, color: '#a9ad91' }}>thinking…</span>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 20 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#d4f222', paddingTop: 3 }}>INTERVIEWER</span>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#d4f222', paddingTop: 3 }}>COUNTERPART</span>
               <span style={{ fontSize: 15.5, color: '#a9ad91' }}>thinking…</span>
             </div>
           )

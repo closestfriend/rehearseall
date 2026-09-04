@@ -2,11 +2,20 @@ import { describe, it, expect } from 'vitest';
 import {
   SERVER_PERSONAS, PREBUILT_VOICE_IDS, getPersona, pickPersona,
   buildInterviewerSystemInstruction, INTERVIEWER_CORE,
+  buildPracticeSystemInstruction, getFeedbackSystemInstruction,
   SYSTEM_INSTRUCTION_FEEDBACK, MODELS,
 } from './prompts';
-import type { ResumeData } from '../../types';
+import type { ConversationSetup, ResumeData } from '../../types';
 
 const RESUME: ResumeData = { text: 'Ten years in ML research.', role: 'Research Scientist', experienceLevel: 'senior' };
+const CONVERSATION: ConversationSetup = {
+  kind: 'conversation',
+  title: 'AI use and teenagers',
+  counterpart: "A physician at Nationwide Children's Hospital",
+  goal: 'Explain my research clearly and learn where medical context changes the problem.',
+  context: 'I research AI harms but feel out of depth in the medical world.',
+  concern: 'Missing the opportunity by sounding underprepared.',
+};
 
 describe('SERVER_PERSONAS', () => {
   it('has six personas with unique ids', () => {
@@ -103,6 +112,27 @@ describe('SYSTEM_INSTRUCTION_FEEDBACK', () => {
   it('weights role-fit to the job description when one is provided', () => {
     expect(SYSTEM_INSTRUCTION_FEEDBACK).toContain('JOB DESCRIPTION');
     expect(SYSTEM_INSTRUCTION_FEEDBACK.toLowerCase()).toContain('requirements');
+  });
+});
+
+describe('open rehearsal prompts', () => {
+  const skeptic = getPersona('skeptic')!;
+
+  it('frames a conversation counterpart around the user-defined context and goal', () => {
+    const out = buildPracticeSystemInstruction(CONVERSATION, skeptic);
+    expect(out).toContain(CONVERSATION.counterpart);
+    expect(out).toContain(CONVERSATION.goal);
+    expect(out).toContain(CONVERSATION.context);
+    expect(out).toContain(CONVERSATION.concern);
+    expect(out).toContain('rehearsal');
+    expect(out).not.toContain('conducting a job interview');
+  });
+
+  it('selects a conversation debrief rubric without interview scoring language', () => {
+    const out = getFeedbackSystemInstruction(CONVERSATION);
+    expect(out).toContain('goal advancement');
+    expect(out).toContain('interdisciplinary');
+    expect(out).not.toContain('hiring manager');
   });
 });
 

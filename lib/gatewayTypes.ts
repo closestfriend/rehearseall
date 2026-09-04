@@ -1,10 +1,10 @@
-import type { ResumeData, InterviewMessage, InterviewFeedback } from '../types';
+import type { PracticeSetup, InterviewMessage, InterviewFeedback } from '../types';
 
 // Request/response contracts for the /api gateway. Imported by both the
 // Vercel functions and services/apiClient.ts — keep this file types-only.
 
 export interface EvaluateRequest {
-  setup: ResumeData;
+  setup: PracticeSetup;
   transcript: InterviewMessage[];
 }
 export type EvaluateResponse = InterviewFeedback;
@@ -14,7 +14,7 @@ export interface GatewayError {
 }
 
 export interface ChatRequest {
-  setup: ResumeData;
+  setup: PracticeSetup;
   /** Full history so far (client-rendered shape); [] on the first turn. */
   messages: InterviewMessage[];
   /** Echo of the first response's sessionId on subsequent turns. */
@@ -33,7 +33,7 @@ export interface ChatResponse {
 }
 
 export interface LiveTokenRequest {
-  setup: ResumeData;
+  setup: PracticeSetup;
   /** Anti-repeat hint, initial mint only. */
   lastPersonaId?: string;
   /** goAway reconnects need a fresh single-use token for the SAME persona. */
