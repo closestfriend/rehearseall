@@ -3,7 +3,8 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
-import { MODELS, getFeedbackSystemInstruction } from './_lib/prompts';
+import { getFeedbackSystemInstruction } from './_lib/prompts';
+import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
 import { buildEvaluatorPrompt } from './_lib/evaluatorPrompt';
 import { formatTranscriptForEvaluator } from './_lib/transcriptFormat';
 import type { EvaluateRequest } from '../lib/gatewayTypes';
@@ -57,12 +58,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const prompt = buildEvaluatorPrompt(setup.value, formatTranscriptForEvaluator(transcript.value));
 
   let lastErr: unknown;
-  for (const model of MODELS.EVALUATOR_CHAIN) {
+  for (const model of MODEL_ROUTES.EVALUATION.chain) {
     try {
       const response = await ai.models.generateContent({
         model,
         contents: prompt,
         config: {
+          ...generationConfig(MODEL_ROUTES.EVALUATION),
           systemInstruction: getFeedbackSystemInstruction(setup.value),
           responseMimeType: 'application/json',
           maxOutputTokens: 16384,

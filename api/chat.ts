@@ -3,7 +3,8 @@ import { GoogleGenAI } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup, validateMessages } from './_lib/validate';
-import { MODELS, getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
+import { getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
+import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
 import type { ChatRequest, ChatResponse } from '../lib/gatewayTypes';
 
 // The hidden opening user turn — moved from InterviewChat.tsx's initChat.
@@ -39,12 +40,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const ai = new GoogleGenAI({ apiKey: key });
   let lastErr: unknown;
-  for (const model of MODELS.TEXT_CHEF_CHAIN) {
+  for (const model of MODEL_ROUTES.INTERACTIVE.chain) {
     try {
       const response = await ai.models.generateContent({
         model,
         contents,
-        config: { systemInstruction: buildPracticeSystemInstruction(setup.value, persona) },
+        config: {
+          ...generationConfig(MODEL_ROUTES.INTERACTIVE),
+          systemInstruction: buildPracticeSystemInstruction(setup.value, persona),
+        },
       });
       const reply = response.text;
       if (!reply) {
