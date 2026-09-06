@@ -1,4 +1,11 @@
-import type { PracticeSetup, InterviewMessage, InterviewFeedback } from '../types';
+import type {
+  AssessmentAnswer,
+  AssessmentDeck,
+  PracticeSetup,
+  RehearsalSetup,
+  InterviewMessage,
+  InterviewFeedback,
+} from '../types';
 
 // Request/response contracts for the /api gateway. Imported by both the
 // Vercel functions and services/apiClient.ts — keep this file types-only.
@@ -8,6 +15,18 @@ export interface EvaluateRequest {
   transcript: InterviewMessage[];
 }
 export type EvaluateResponse = InterviewFeedback;
+
+export interface AssessmentDeckRequest {
+  setup: RehearsalSetup;
+}
+export type AssessmentDeckResponse = AssessmentDeck;
+
+export interface EvaluateAssessmentRequest {
+  setup: RehearsalSetup;
+  deck: AssessmentDeck;
+  answers: AssessmentAnswer[];
+}
+export type EvaluateAssessmentResponse = InterviewFeedback;
 
 export interface GatewayError {
   error: { code: string; message: string };
