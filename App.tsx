@@ -14,9 +14,10 @@ import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFee
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { LAST_PERSONA_STORAGE_KEY } from './constants';
-import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceTitle } from './lib/practiceSetup';
+import { isConversationSetup, isRehearsalSetup, practiceDetail, practicePersonaLabel, practiceTitle } from './lib/practiceSetup';
 import { createRehearsalSetup, REHEARSAL_PRESETS } from './lib/rehearsalCatalog';
 import { destinationForRehearsal } from './lib/rehearsalNavigation';
+import { resetStageScroll } from './lib/stageEffects';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
@@ -79,6 +80,10 @@ const App: React.FC = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    resetStageScroll(options => window.scrollTo(options));
+  }, [stage]);
 
   const saveToHistory = (entry: HistoryEntry) => {
     const newHistory = [entry, ...history];
@@ -247,7 +252,7 @@ const App: React.FC = () => {
     setFeedbackError(null);
     setCurrentTranscript(transcript);
     setCurrentMode('text');
-    setDisplayPersonaName(personaName);
+    setDisplayPersonaName(null);
     saveToHistory({
       id: crypto.randomUUID(),
       date: Date.now(),
@@ -279,7 +284,7 @@ const App: React.FC = () => {
     }
     setFeedback(entry.feedback);
     setCurrentTranscript(entry.transcript);
-    setDisplayPersonaName(entry.personaName ?? null);
+    setDisplayPersonaName(practicePersonaLabel(entry.resume, entry.personaName));
     setCurrentMode(entry.mode ?? null);
     setStage(AppStage.FEEDBACK);
   };

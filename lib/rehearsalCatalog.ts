@@ -388,6 +388,28 @@ export function getRehearsalPreset(id: string): RehearsalPreset | undefined {
   return REHEARSAL_PRESETS.find(preset => preset.id === id);
 }
 
+export function resolveRehearsalSelection(
+  visiblePresets: RehearsalPreset[],
+  selectedId: string,
+): RehearsalPreset | undefined {
+  return visiblePresets.find(preset => preset.id === selectedId) ?? visiblePresets[0];
+}
+
+export function formatRehearsalListedSize(preset: RehearsalPreset): string {
+  if (preset.listedDurationMinutes) {
+    if (preset.listedDurationMinutes >= 60) {
+      const hours = Math.floor(preset.listedDurationMinutes / 60);
+      const minutes = preset.listedDurationMinutes % 60;
+      return `${hours}h ${minutes}m listed`;
+    }
+    return `${preset.listedDurationMinutes} min listed`;
+  }
+  if (preset.listedQuestionCount) {
+    return `${preset.listedQuestionCount} ${preset.listedQuestionCount === 1 ? 'question' : 'questions'} listed`;
+  }
+  return 'cognitive format';
+}
+
 export function createRehearsalSetup(
   preset: RehearsalPreset,
   participantContext: string,
