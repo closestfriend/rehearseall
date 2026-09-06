@@ -172,6 +172,12 @@ describe('custom rehearsal prompts', () => {
     expect(out).toContain(REHEARSAL.evaluationCriteria[1]);
     expect(out).not.toContain('medical expertise');
   });
+
+  it('tells screen-enabled evaluators how to use shared visual evidence', () => {
+    const out = buildPracticeSystemInstruction({ ...REHEARSAL, supportsScreenShare: true }, examiner);
+    expect(out).toContain('visual evidence');
+    expect(out).toContain('screen');
+  });
 });
 
 describe('MODELS', () => {

@@ -16,6 +16,10 @@ interface VoiceInterviewChromeProps {
   cameraOn: boolean;
   cameraError: string | null;
   onToggleCamera: () => void;
+  screenShareAvailable: boolean;
+  screenSharing: boolean;
+  screenShareError: string | null;
+  onToggleScreenShare: () => void;
   muted: boolean;
   onMute: () => void;
   onFinish: () => void;
@@ -50,6 +54,10 @@ const TranscriptVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
   cameraOn,
   cameraError,
   onToggleCamera,
+  screenShareAvailable,
+  screenSharing,
+  screenShareError,
+  onToggleScreenShare,
   muted,
   onMute,
   onFinish,
@@ -78,6 +86,16 @@ const TranscriptVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16 }}>
+            {screenShareAvailable && (
+              <button
+                type="button"
+                onClick={onToggleScreenShare}
+                title={screenSharing ? 'Stop sharing your screen' : 'Share your screen with the rehearsal partner'}
+                style={{ fontSize: 11, color: screenSharing ? '#b3402a' : '#8a8471', border: `1px solid ${screenSharing ? '#b3402a' : '#b9b4a5'}`, padding: isMobile ? '10px 12px' : '6px 12px', background: 'none', cursor: 'pointer', fontFamily: 'inherit', minHeight: isMobile ? 44 : undefined }}
+              >
+                {screenSharing ? '[screen: on]' : '[share screen]'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onToggleCamera}
@@ -198,8 +216,8 @@ const TranscriptVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
             >
               REST YOUR CASE →
             </button>
-            {cameraError && (
-              <span style={{ fontSize: 11, color: '#8a8471' }}>{cameraError}</span>
+            {(cameraError || screenShareError) && (
+              <span style={{ fontSize: 11, color: '#8a8471' }}>{screenShareError || cameraError}</span>
             )}
           </div>
         </div>
