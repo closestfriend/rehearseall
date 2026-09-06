@@ -8,6 +8,7 @@ import { useIsMobile } from '../hooks';
 interface Props {
   history: HistoryEntry[];
   onStartInterview: () => void;
+  onBrowseRehearsals: () => void;
   onViewSession: (entry: HistoryEntry) => void;
   onViewSessionLog: () => void;
 }
@@ -15,7 +16,7 @@ interface Props {
 const revealedPersonas = INTERVIEWER_PERSONAS.slice(0, 3).map(p => p.name).join(', ');
 const sealedCount = INTERVIEWER_PERSONAS.length - 3;
 
-const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSession, onViewSessionLog }) => {
+const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onBrowseRehearsals, onViewSession, onViewSessionLog }) => {
   const { setTheme } = useTheme();
   const isMobile = useIsMobile();
   const sessions = history.slice(0, 3).map(toSessionRow);
@@ -85,6 +86,13 @@ const TranscriptHome: React.FC<Props> = ({ history, onStartInterview, onViewSess
               style={{ display: 'inline-block', background: '#1c1b18', color: '#fbfaf6', padding: '16px 32px', fontSize: 14, fontWeight: 600, border: 'none', fontFamily: 'inherit', cursor: 'pointer', minHeight: 44, textAlign: 'center' }}
             >
               BEGIN SESSION →
+            </button>
+            <button
+              type="button"
+              onClick={onBrowseRehearsals}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', color: '#b3402a', padding: '15px 24px', fontSize: 13, fontWeight: 600, border: '1px solid #b3402a', fontFamily: 'inherit', cursor: 'pointer', minHeight: 44 }}
+            >
+              BROWSE REHEARSALS
             </button>
             <span style={{ fontSize: 12.5, color: '#6d685c' }}>voice or text · 5–7 questions · full debrief on record</span>
           </div>

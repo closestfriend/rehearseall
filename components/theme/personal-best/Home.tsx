@@ -9,6 +9,7 @@ import { practiceTitle } from '../../../lib/practiceSetup';
 interface Props {
   history: HistoryEntry[];
   onStartInterview: () => void;
+  onBrowseRehearsals: () => void;
   onViewSession: (entry: HistoryEntry) => void;
   onViewSessionLog: () => void;
 }
@@ -34,7 +35,7 @@ const RevealDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ style, chil
   );
 };
 
-const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSession, onViewSessionLog }) => {
+const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onBrowseRehearsals, onViewSession, onViewSessionLog }) => {
   const { setTheme } = useTheme();
   const isMobile = useIsMobile();
   const lastEntry = history[0] ?? null;
@@ -100,6 +101,13 @@ const PersonalBestHome: React.FC<Props> = ({ history, onStartInterview, onViewSe
               style={{ flex: isMobile ? '1 1 100%' : 'none', display: 'inline-block', background: '#d4f222', color: '#101208', padding: '18px 40px', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', minHeight: 44, boxSizing: 'border-box' }}
             >
               START A REP →
+            </button>
+            <button
+              type="button"
+              onClick={onBrowseRehearsals}
+              style={{ flex: isMobile ? '1 1 100%' : 'none', background: 'transparent', color: '#d4f222', padding: '17px 30px', fontSize: 15, fontWeight: 700, border: '1px solid #d4f222', cursor: 'pointer', minHeight: 44, boxSizing: 'border-box' }}
+            >
+              BROWSE REHEARSALS
             </button>
           </div>
         </div>

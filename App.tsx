@@ -8,18 +8,21 @@ import ThemedConversationSetup from './components/theme/ThemedConversationSetup'
 import ThemedModePicker from './components/theme/ThemedModePicker';
 import ThemedDebrief from './components/theme/ThemedDebrief';
 import ThemedSessionLog from './components/theme/ThemedSessionLog';
-import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry, PracticeSetup } from './types';
+import RehearsalLibrary from './components/RehearsalLibrary';
+import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry, PracticeSetup, RehearsalSetup } from './types';
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { LAST_PERSONA_STORAGE_KEY } from './constants';
-import { isConversationSetup, practiceDetail, practiceTitle } from './lib/practiceSetup';
+import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceTitle } from './lib/practiceSetup';
+import { createRehearsalSetup, REHEARSAL_PRESETS } from './lib/rehearsalCatalog';
+import { destinationForRehearsal } from './lib/rehearsalNavigation';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
 const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.LANDING);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [practiceKind, setPracticeKind] = useState<'conversation' | 'interview'>('conversation');
+  const [practiceKind, setPracticeKind] = useState<'conversation' | 'interview' | 'rehearsal'>('conversation');
   const [conversationData, setConversationData] = useState<ConversationSetup>({
     kind: 'conversation',
     title: '',
@@ -35,6 +38,9 @@ const App: React.FC = () => {
     experienceLevel: 'mid',
     jobDescription: ''
   });
+  const [rehearsalData, setRehearsalData] = useState<RehearsalSetup>(() =>
+    createRehearsalSetup(REHEARSAL_PRESETS[0], '')
+  );
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [resumeParseState, setResumeParseState] = useState<'idle' | 'parsing' | 'error'>('idle');
   const [feedback, setFeedback] = useState<InterviewFeedback | null>(null);
@@ -55,7 +61,11 @@ const App: React.FC = () => {
   // AudioContexts, marks the session unmounted) and kills audio after the
   // very first mint.
   const [pinnedLastPersonaId, setPinnedLastPersonaId] = useState<string | undefined>(undefined);
-  const activeSetup: PracticeSetup = practiceKind === 'conversation' ? conversationData : resumeData;
+  const activeSetup: PracticeSetup = practiceKind === 'conversation'
+    ? conversationData
+    : practiceKind === 'rehearsal'
+      ? rehearsalData
+      : resumeData;
 
   // Load history on mount
   useEffect(() => {
@@ -96,10 +106,15 @@ const App: React.FC = () => {
   // pulls its resume/role/JD into the form (history card path); without one,
   // resumeData already reflects the report on screen (feedback screen path).
   const startPracticeAgain = (entry?: HistoryEntry) => {
+    let repeatSetup: PracticeSetup = activeSetup;
     if (entry) {
+      repeatSetup = entry.resume;
       if (isConversationSetup(entry.resume)) {
         setPracticeKind('conversation');
         setConversationData(entry.resume);
+      } else if (isRehearsalSetup(entry.resume)) {
+        setPracticeKind('rehearsal');
+        setRehearsalData(entry.resume);
       } else {
         setPracticeKind('interview');
         setResumeData(entry.resume);
@@ -108,7 +123,20 @@ const App: React.FC = () => {
     setFeedback(null);
     setUploadedFile(null);
     setResumeParseState('idle');
-    setStage(AppStage.RESUME_UPLOAD);
+    if (isRehearsalSetup(repeatSetup)) {
+      setStage(destinationForRehearsal(repeatSetup));
+    } else {
+      setStage(AppStage.RESUME_UPLOAD);
+    }
+  };
+
+  const startCustomRehearsal = (setup: RehearsalSetup) => {
+    setPracticeKind('rehearsal');
+    setRehearsalData(setup);
+    setFeedback(null);
+    setCurrentTranscript([]);
+    setDisplayPersonaName(null);
+    setStage(destinationForRehearsal(setup));
   };
 
   const handleFileSelected = async (file: File) => {
@@ -219,6 +247,9 @@ const App: React.FC = () => {
     if (isConversationSetup(entry.resume)) {
       setPracticeKind('conversation');
       setConversationData(entry.resume);
+    } else if (isRehearsalSetup(entry.resume)) {
+      setPracticeKind('rehearsal');
+      setRehearsalData(entry.resume);
     } else {
       setPracticeKind('interview');
       setResumeData(entry.resume);
@@ -328,7 +359,7 @@ ${transcriptMd}
       mode={selectedMode}
       onModeChange={setSelectedMode}
       onStart={() => startInterview(selectedMode === 'voice' ? AppStage.INTERVIEWING_VOICE : AppStage.INTERVIEWING_TEXT)}
-      onBack={() => setStage(AppStage.RESUME_UPLOAD)}
+      onBack={() => setStage(practiceKind === 'rehearsal' ? AppStage.REHEARSAL_LIBRARY : AppStage.RESUME_UPLOAD)}
     />
   );
 
@@ -353,8 +384,15 @@ ${transcriptMd}
         <ThemedHome
           history={history}
           onStartInterview={handleStartResume}
+          onBrowseRehearsals={() => setStage(AppStage.REHEARSAL_LIBRARY)}
           onViewSession={viewHistoryItem}
           onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
+        />
+      );
+      case AppStage.REHEARSAL_LIBRARY: return (
+        <RehearsalLibrary
+          onBack={() => setStage(AppStage.LANDING)}
+          onStart={startCustomRehearsal}
         />
       );
       case AppStage.RESUME_UPLOAD: return renderSetup();
@@ -379,6 +417,12 @@ ${transcriptMd}
             timestamp: Date.now()
           })))}
           onCancel={() => setStage(AppStage.INTERVIEW_MODE)}
+        />
+      );
+      case AppStage.ASSESSMENT_ACTIVE: return (
+        <RehearsalLibrary
+          onBack={() => setStage(AppStage.LANDING)}
+          onStart={startCustomRehearsal}
         />
       );
       case AppStage.FEEDBACK: return (
@@ -415,6 +459,7 @@ ${transcriptMd}
         <ThemedHome
           history={history}
           onStartInterview={handleStartResume}
+          onBrowseRehearsals={() => setStage(AppStage.REHEARSAL_LIBRARY)}
           onViewSession={viewHistoryItem}
           onViewSessionLog={() => setStage(AppStage.SESSION_LOG)}
         />
