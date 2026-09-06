@@ -16,7 +16,43 @@ export interface ConversationSetup {
   concern?: string;
 }
 
-export type PracticeSetup = ResumeData | ConversationSetup;
+export type RehearsalFormat = 'interview' | 'assessment';
+
+export interface RehearsalPreset {
+  id: string;
+  title: string;
+  collection: 'practice';
+  domain: string;
+  format: RehearsalFormat;
+  listedDurationMinutes?: number;
+  listedQuestionCount?: number;
+  practiceQuestionCount: number;
+  description: string;
+  instructions: string;
+  competencies: string[];
+  guidance: string[];
+  evaluationCriteria: string[];
+  supportsScreenShare: boolean;
+  sourceConfidence: 'title-only';
+}
+
+export interface RehearsalSetup {
+  kind: 'rehearsal';
+  presetId: string;
+  title: string;
+  format: RehearsalFormat;
+  domain: string;
+  description: string;
+  instructions: string;
+  competencies: string[];
+  guidance: string[];
+  evaluationCriteria: string[];
+  targetQuestionCount: number;
+  supportsScreenShare: boolean;
+  participantContext: string;
+}
+
+export type PracticeSetup = ResumeData | ConversationSetup | RehearsalSetup;
 
 export interface InterviewMessage {
   role: 'user' | 'assistant';
