@@ -5,7 +5,7 @@ import {
   buildPracticeSystemInstruction, getFeedbackSystemInstruction,
   SYSTEM_INSTRUCTION_FEEDBACK, MODELS,
 } from './prompts';
-import type { ConversationSetup, ResumeData } from '../../types';
+import type { ConversationSetup, RehearsalSetup, ResumeData } from '../../types';
 
 const RESUME: ResumeData = { text: 'Ten years in ML research.', role: 'Research Scientist', experienceLevel: 'senior' };
 const CONVERSATION: ConversationSetup = {
@@ -15,6 +15,21 @@ const CONVERSATION: ConversationSetup = {
   goal: 'Explain my research clearly and learn where medical context changes the problem.',
   context: 'I research AI harms but feel out of depth in the medical world.',
   concern: 'Missing the opportunity by sounding underprepared.',
+};
+const REHEARSAL: RehearsalSetup = {
+  kind: 'rehearsal',
+  presetId: 'ai-fluency-interview',
+  title: 'AI Fluency Interview',
+  format: 'interview',
+  domain: 'AI and evaluation',
+  description: 'Explain practical AI use.',
+  instructions: 'Probe real workflows and verification.',
+  competencies: ['AI workflows', 'verification discipline'],
+  guidance: ['ask for a concrete failure', 'ask when AI should not be used'],
+  evaluationCriteria: ['practical specificity', 'calibrated claims'],
+  targetQuestionCount: 6,
+  supportsScreenShare: false,
+  participantContext: 'I study AI harms and evaluate model behavior.',
 };
 
 describe('SERVER_PERSONAS', () => {
@@ -133,6 +148,29 @@ describe('open rehearsal prompts', () => {
     expect(out).toContain('goal advancement');
     expect(out).toContain('interdisciplinary');
     expect(out).not.toContain('hiring manager');
+  });
+});
+
+describe('custom rehearsal prompts', () => {
+  const examiner = getPersona('examiner')!;
+
+  it('builds an adaptive preset interview from the complete setup', () => {
+    const out = buildPracticeSystemInstruction(REHEARSAL, examiner);
+    expect(out).toContain(REHEARSAL.title);
+    expect(out).toContain(REHEARSAL.competencies[0]);
+    expect(out).toContain(REHEARSAL.guidance[0]);
+    expect(out).toContain(REHEARSAL.participantContext);
+    expect(out).toContain('6 substantive questions');
+    expect(out).toContain('one question at a time');
+    expect(out).toContain('independent practice approximation');
+    expect(out.toLowerCase()).toContain('concludes our interview');
+  });
+
+  it('selects the preset evaluation criteria for the debrief', () => {
+    const out = getFeedbackSystemInstruction(REHEARSAL);
+    expect(out).toContain(REHEARSAL.evaluationCriteria[0]);
+    expect(out).toContain(REHEARSAL.evaluationCriteria[1]);
+    expect(out).not.toContain('medical expertise');
   });
 });
 

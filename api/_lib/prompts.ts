@@ -1,4 +1,4 @@
-import type { ConversationSetup, PracticeSetup, ResumeData } from '../../types';
+import type { ConversationSetup, PracticeSetup, RehearsalSetup, ResumeData } from '../../types';
 
 // Public roster, mirrored from constants.ts BY VALUE, not imported: Vercel's
 // function builder does per-file transpile with no bundling, so any runtime
@@ -143,13 +143,48 @@ The user's desired outcome: ${setup.goal}
 Context: ${context}${concern}`;
 }
 
+function buildRehearsalSystemInstruction(
+  setup: RehearsalSetup,
+  persona: ServerPersona,
+): string {
+  const context = setup.participantContext.trim() || 'No participant background was supplied.';
+  return `
+You are conducting an independent practice approximation of a named professional assessment format.
+You are not an assessment provider, do not claim access to official questions, and must not imply endorsement or affiliation.
+
+CRITICAL — LANGUAGE: Conduct the entire rehearsal in ENGLISH.
+
+REHEARSAL RULES:
+- Stay in character as the evaluator. Do not coach during the rehearsal.
+- Begin with a brief introduction and one first question.
+- Ask one question at a time and ask exactly ${setup.targetQuestionCount} substantive questions.
+- Adapt follow-ups to details in the participant's prior answer instead of reading a generic script.
+- Test concrete evidence, genuine reasoning, and appropriate uncertainty.
+- Keep turns concise and spoken.
+- When the final answer is complete, close by saying, verbatim:
+  "Thank you for your time. This concludes our interview."
+
+REHEARSAL: ${setup.title}
+DOMAIN: ${setup.domain}
+FORMAT BRIEF: ${setup.description}
+HOW TO RUN IT: ${setup.instructions}
+COMPETENCIES:
+${setup.competencies.map(item => `- ${item}`).join('\n')}
+FOLLOW-UP GUIDANCE:
+${setup.guidance.map(item => `- ${item}`).join('\n')}
+PARTICIPANT CONTEXT: ${context}
+
+EVALUATOR STYLE — ${persona.name}:
+${persona.fragment}`;
+}
+
 export function buildPracticeSystemInstruction(
   setup: PracticeSetup,
   persona: ServerPersona
 ): string {
-  return setup.kind === 'conversation'
-    ? buildConversationSystemInstruction(setup, persona)
-    : buildInterviewerSystemInstruction(setup, persona);
+  if (setup.kind === 'conversation') return buildConversationSystemInstruction(setup, persona);
+  if (setup.kind === 'rehearsal') return buildRehearsalSystemInstruction(setup, persona);
+  return buildInterviewerSystemInstruction(setup, persona);
 }
 
 export const SYSTEM_INSTRUCTION_FEEDBACK = `
@@ -231,8 +266,30 @@ Provide the same structured JSON shape as the interview debrief:
    If the score is 70 or above, return an empty suggestions array.
 `;
 
+function getRehearsalFeedbackSystemInstruction(setup: RehearsalSetup): string {
+  return `
+You evaluate an independent professional rehearsal named "${setup.title}".
+
+CRITICAL: Write the report in ENGLISH. Judge the participant against this
+specific practice format, not against generic interview charisma. Do not imply
+that the questions or score are official, affiliated with, or endorsed by an assessment provider.
+
+Score primarily on:
+${setup.evaluationCriteria.map(item => `- ${item}`).join('\n')}
+- depth and accuracy under follow-up
+- concrete evidence and appropriate uncertainty
+
+Account for automatic transcription artifacts and do not penalize suspected
+noise, repeated tokens, or broken fragments.
+
+Return valid JSON with score (0-100), strengths, improvements,
+detailedAnalysis, and suggestions. If the score is below 70, suggestions may
+identify 2-4 weak USER REPLY indexes with a critique and modelAnswer. If the
+score is 70 or above, suggestions must be an empty array.`;
+}
+
 export function getFeedbackSystemInstruction(setup: PracticeSetup): string {
-  return setup.kind === 'conversation'
-    ? SYSTEM_INSTRUCTION_CONVERSATION_FEEDBACK
-    : SYSTEM_INSTRUCTION_FEEDBACK;
+  if (setup.kind === 'conversation') return SYSTEM_INSTRUCTION_CONVERSATION_FEEDBACK;
+  if (setup.kind === 'rehearsal') return getRehearsalFeedbackSystemInstruction(setup);
+  return SYSTEM_INSTRUCTION_FEEDBACK;
 }

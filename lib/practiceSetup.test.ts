@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isConversationSetup, practiceDetail, practiceTitle } from './practiceSetup';
-import type { ConversationSetup, ResumeData } from '../types';
+import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceTitle } from './practiceSetup';
+import type { ConversationSetup, RehearsalSetup, ResumeData } from '../types';
 
 const interview: ResumeData = {
   kind: 'interview',
@@ -17,6 +17,22 @@ const conversation: ConversationSetup = {
   context: 'I research AI harms.',
 };
 
+const rehearsal: RehearsalSetup = {
+  kind: 'rehearsal',
+  presetId: 'system-design-session',
+  title: 'System Design Session',
+  format: 'interview',
+  domain: 'Software and systems',
+  description: 'Design a system.',
+  instructions: 'Probe architecture tradeoffs.',
+  competencies: ['architecture'],
+  guidance: ['add a scale constraint'],
+  evaluationCriteria: ['tradeoff quality'],
+  targetQuestionCount: 7,
+  supportsScreenShare: true,
+  participantContext: '',
+};
+
 describe('practice setup display helpers', () => {
   it('uses the target role and level for an interview rehearsal', () => {
     expect(practiceTitle(interview)).toBe('Research Scientist');
@@ -27,5 +43,11 @@ describe('practice setup display helpers', () => {
     expect(isConversationSetup(conversation)).toBe(true);
     expect(practiceTitle(conversation)).toBe('AI use and teenagers');
     expect(practiceDetail(conversation)).toBe("A physician at Nationwide Children's Hospital");
+  });
+
+  it('uses the preset title and domain for a custom rehearsal', () => {
+    expect(isRehearsalSetup(rehearsal)).toBe(true);
+    expect(practiceTitle(rehearsal)).toBe('System Design Session');
+    expect(practiceDetail(rehearsal)).toBe('Software and systems');
   });
 });

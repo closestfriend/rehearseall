@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildEvaluatorPrompt } from './evaluatorPrompt';
-import type { ConversationSetup, ResumeData } from '../../types';
+import type { ConversationSetup, RehearsalSetup, ResumeData } from '../../types';
 
 const RESUME: ResumeData = {
   text: 'Ten years in ML research.',
@@ -15,6 +15,13 @@ const CONVERSATION: ConversationSetup = {
   goal: 'Explain my research clearly and learn where medical context changes the problem.',
   context: 'I research AI harms but feel out of depth in the medical world.',
   concern: 'Missing the opportunity by sounding underprepared.',
+};
+const REHEARSAL: RehearsalSetup = {
+  kind: 'rehearsal', presetId: 'ai-fluency-interview', title: 'AI Fluency Interview',
+  format: 'interview', domain: 'AI and evaluation', description: 'Explain practical AI use.',
+  instructions: 'Probe real workflows.', competencies: ['verification'], guidance: ['ask for a failure'],
+  evaluationCriteria: ['calibrated claims'], targetQuestionCount: 6, supportsScreenShare: false,
+  participantContext: 'I evaluate AI systems.',
 };
 
 describe('buildEvaluatorPrompt', () => {
@@ -53,6 +60,15 @@ describe('buildEvaluatorPrompt', () => {
     expect(out).toContain(`DESIRED OUTCOME: ${CONVERSATION.goal}`);
     expect(out).toContain(CONVERSATION.context);
     expect(out).toContain(CONVERSATION.concern);
+    expect(out).toContain(TRANSCRIPT);
+    expect(out).not.toContain('RESUME:');
+  });
+
+  it('builds a custom-rehearsal brief without treating it as a resume interview', () => {
+    const out = buildEvaluatorPrompt(REHEARSAL, TRANSCRIPT);
+    expect(out).toContain(`REHEARSAL: ${REHEARSAL.title}`);
+    expect(out).toContain(REHEARSAL.domain);
+    expect(out).toContain(REHEARSAL.participantContext);
     expect(out).toContain(TRANSCRIPT);
     expect(out).not.toContain('RESUME:');
   });

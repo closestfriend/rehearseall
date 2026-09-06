@@ -23,6 +23,19 @@ export function buildEvaluatorPrompt(
       ${chatTranscript}
     `;
   }
+  if (resume.kind === 'rehearsal') {
+    return `
+      REHEARSAL: ${resume.title}
+      DOMAIN: ${resume.domain}
+      FORMAT: ${resume.format}
+      PARTICIPANT CONTEXT: ${resume.participantContext.trim() || 'none provided'}
+      COMPETENCIES: ${resume.competencies.join('; ')}
+      EVALUATION CRITERIA: ${resume.evaluationCriteria.join('; ')}
+
+      REHEARSAL TRANSCRIPT:
+      ${chatTranscript}
+    `;
+  }
   const jd = resume.jobDescription?.trim();
   const jdLine = jd ? `\n      JOB DESCRIPTION: ${jd}` : '';
   const resumeLine = resume.text.trim()

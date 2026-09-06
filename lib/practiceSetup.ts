@@ -1,4 +1,4 @@
-import type { ConversationSetup, PracticeSetup } from '../types';
+import type { ConversationSetup, PracticeSetup, RehearsalSetup } from '../types';
 
 export function isConversationSetup(
   setup: PracticeSetup,
@@ -6,12 +6,18 @@ export function isConversationSetup(
   return setup.kind === 'conversation';
 }
 
+export function isRehearsalSetup(
+  setup: PracticeSetup,
+): setup is RehearsalSetup {
+  return setup.kind === 'rehearsal';
+}
+
 export function practiceTitle(setup: PracticeSetup): string {
-  return isConversationSetup(setup) ? setup.title : setup.role;
+  return isConversationSetup(setup) || isRehearsalSetup(setup) ? setup.title : setup.role;
 }
 
 export function practiceDetail(setup: PracticeSetup): string {
-  return isConversationSetup(setup)
-    ? setup.counterpart
-    : setup.experienceLevel;
+  if (isConversationSetup(setup)) return setup.counterpart;
+  if (isRehearsalSetup(setup)) return setup.domain;
+  return setup.experienceLevel;
 }
