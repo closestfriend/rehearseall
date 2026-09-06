@@ -7,6 +7,7 @@ import { audioWorkletCode, base64Encode } from '../lib/audioWorklet';
 import { parseLiveSessionSignal } from '../lib/liveSessionSignals';
 import ThemedVoiceInterviewChrome from './theme/ThemedVoiceInterviewChrome';
 import { practiceDetail, practiceTitle } from '../lib/practiceSetup';
+import { canShareScreen, captureScreenFrame } from '../lib/screenShare';
 
 // Rough proxy for "questions asked" (one interviewer turn ≈ one question) — the
 // client has no other way to know where Gemini is in its own 5-7 question plan.
@@ -26,6 +27,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
   const [volume, setVolume] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [screenSharing, setScreenSharing] = useState(false);
+  const [screenShareError, setScreenShareError] = useState<string | null>(null);
 
   // Presentational-only state for the themed chrome — purely additive, does not
   // touch the audio pipeline or session lifecycle below.
@@ -46,6 +49,10 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
   const streamRef = useRef<MediaStream | null>(null);
   const videoStreamRef = useRef<MediaStream | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
+  const displayStreamRef = useRef<MediaStream | null>(null);
+  const screenVideoRef = useRef<HTMLVideoElement | null>(null);
+  const screenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const screenIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionRef = useRef<any>(null);
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
@@ -66,6 +73,26 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
   const isUnmountedRef = useRef(false);
   const [needsGesture, setNeedsGesture] = useState(false);
   const gestureResolveRef = useRef<(() => void) | null>(null);
+  const screenShareAvailable = canShareScreen(
+    setup,
+    typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined,
+  );
+
+  const stopScreenShare = useCallback(() => {
+    if (screenIntervalRef.current) {
+      clearInterval(screenIntervalRef.current);
+      screenIntervalRef.current = null;
+    }
+    displayStreamRef.current?.getTracks().forEach(track => track.stop());
+    displayStreamRef.current = null;
+    if (screenVideoRef.current) {
+      screenVideoRef.current.pause();
+      screenVideoRef.current.srcObject = null;
+    }
+    screenVideoRef.current = null;
+    screenCanvasRef.current = null;
+    setScreenSharing(false);
+  }, []);
 
   const decode = (base64: string) => {
     const binaryString = atob(base64);
@@ -283,6 +310,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
       sessionRef.current?.close();
       streamRef.current?.getTracks().forEach(t => t.stop());
       videoStreamRef.current?.getTracks().forEach(t => t.stop());
+      stopScreenShare();
       if (audioCtxRef.current) {
         audioCtxRef.current.input.close();
         audioCtxRef.current.output.close();
@@ -291,7 +319,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
       // Intentionally NOT resetting isInitializedRef — the guard exists to
       // suppress StrictMode's double-mount, which reuses the same refs.
     };
-  }, [startSession]);
+  }, [startSession, stopScreenShare]);
 
   // Keep the screen on during the interview; re-acquire when the tab
   // regains visibility (the lock is auto-released on backgrounding).
@@ -377,9 +405,53 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
     }
   }, [cameraOn]);
 
+  const toggleScreenShare = useCallback(async () => {
+    if (screenSharing) {
+      stopScreenShare();
+      return;
+    }
+    if (!screenShareAvailable) return;
+    try {
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.srcObject = displayStream;
+      await video.play();
+
+      const canvas = document.createElement('canvas');
+      displayStreamRef.current = displayStream;
+      screenVideoRef.current = video;
+      screenCanvasRef.current = canvas;
+      displayStream.getVideoTracks()[0]?.addEventListener('ended', stopScreenShare, { once: true });
+      setScreenShareError(null);
+      setScreenSharing(true);
+
+      const sendFrame = () => {
+        const data = captureScreenFrame(video, canvas);
+        if (!data) return;
+        sessionPromiseRef.current
+          ?.then(session => session.sendRealtimeInput({ video: { data, mimeType: 'image/jpeg' } }))
+          .catch(error => console.error('Failed to send screen frame:', error));
+      };
+      sendFrame();
+      screenIntervalRef.current = setInterval(sendFrame, 1000);
+    } catch (err) {
+      console.error('Failed to share screen:', err);
+      stopScreenShare();
+      setScreenShareError('Screen sharing was not started. Choose a window or screen and try again.');
+    }
+  }, [screenShareAvailable, screenSharing, stopScreenShare]);
+
   const handleFinish = () => {
+    stopScreenShare();
     flushBuffers(); // Final check
     onFinish(transcriptionRef.current);
+  };
+
+  const handleCancel = () => {
+    stopScreenShare();
+    onCancel();
   };
 
   return (
@@ -391,7 +463,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
         isConnecting={isConnecting}
         volume={volume}
         questionCount={questionCount}
-        totalQuestions={TOTAL_QUESTIONS_ESTIMATE}
+        totalQuestions={setup.kind === 'rehearsal' ? setup.targetQuestionCount : TOTAL_QUESTIONS_ESTIMATE}
         elapsedSeconds={elapsedSeconds}
         liveTranscript={liveTranscript}
         needsGesture={needsGesture}
@@ -399,10 +471,14 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
         cameraOn={cameraOn}
         cameraError={cameraError}
         onToggleCamera={toggleCamera}
+        screenShareAvailable={screenShareAvailable}
+        screenSharing={screenSharing}
+        screenShareError={screenShareError}
+        onToggleScreenShare={toggleScreenShare}
         muted={muted}
         onMute={toggleMute}
         onFinish={handleFinish}
-        onCancel={onCancel}
+        onCancel={handleCancel}
       />
       {cameraOn && (
         <video

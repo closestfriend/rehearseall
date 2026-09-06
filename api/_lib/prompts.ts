@@ -148,6 +148,9 @@ function buildRehearsalSystemInstruction(
   persona: ServerPersona,
 ): string {
   const context = setup.participantContext.trim() || 'No participant background was supplied.';
+  const screenGuidance = setup.supportsScreenShare
+    ? '\n- The participant may share their screen. Treat received frames as visual evidence: ask them to point out relevant details and ground follow-ups in what is actually visible.'
+    : '';
   return `
 You are conducting an independent practice approximation of a named professional assessment format.
 You are not an assessment provider, do not claim access to official questions, and must not imply endorsement or affiliation.
@@ -160,7 +163,7 @@ REHEARSAL RULES:
 - Ask one question at a time and ask exactly ${setup.targetQuestionCount} substantive questions.
 - Adapt follow-ups to details in the participant's prior answer instead of reading a generic script.
 - Test concrete evidence, genuine reasoning, and appropriate uncertainty.
-- Keep turns concise and spoken.
+- Keep turns concise and spoken.${screenGuidance}
 - When the final answer is complete, close by saying, verbatim:
   "Thank you for your time. This concludes our interview."
 

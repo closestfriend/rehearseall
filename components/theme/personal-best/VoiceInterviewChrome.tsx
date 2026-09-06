@@ -16,6 +16,10 @@ interface VoiceInterviewChromeProps {
   cameraOn: boolean;
   cameraError: string | null;
   onToggleCamera: () => void;
+  screenShareAvailable: boolean;
+  screenSharing: boolean;
+  screenShareError: string | null;
+  onToggleScreenShare: () => void;
   muted: boolean;
   onMute: () => void;
   onFinish: () => void;
@@ -72,6 +76,10 @@ const PersonalBestVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
   cameraOn,
   cameraError,
   onToggleCamera,
+  screenShareAvailable,
+  screenSharing,
+  screenShareError,
+  onToggleScreenShare,
   muted,
   onMute,
   onFinish,
@@ -109,6 +117,16 @@ const PersonalBestVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'space-between' : 'flex-end', gap: isMobile ? 12 : 24, fontSize: 12.5, color: '#a9ad91', flexWrap: 'wrap' }}>
           <span>{roleLabel} · {levelLabel.toUpperCase()}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {screenShareAvailable && (
+              <button
+                type="button"
+                onClick={onToggleScreenShare}
+                title={screenSharing ? 'Stop sharing your screen' : 'Share your screen with the rehearsal partner'}
+                style={{ background: 'none', border: `1px solid ${screenSharing ? '#d4f222' : '#2a2d1a'}`, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: screenSharing ? '#d4f222' : '#6d7157', cursor: 'pointer', minHeight: 44, boxSizing: 'border-box' }}
+              >
+                {screenSharing ? '● SCREEN' : '○ SCREEN'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onToggleCamera}
@@ -198,8 +216,8 @@ const PersonalBestVoiceInterviewChrome: React.FC<VoiceInterviewChromeProps> = ({
           </button>
         </div>
 
-        {cameraError && (
-          <div style={{ marginTop: 16, fontSize: 11.5, color: '#a9ad91' }}>{cameraError}</div>
+        {(cameraError || screenShareError) && (
+          <div style={{ marginTop: 16, fontSize: 11.5, color: '#a9ad91' }}>{screenShareError || cameraError}</div>
         )}
       </div>
 

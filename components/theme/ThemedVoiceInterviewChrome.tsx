@@ -18,6 +18,10 @@ interface Props {
   cameraOn: boolean;
   cameraError: string | null;
   onToggleCamera: () => void;
+  screenShareAvailable: boolean;
+  screenSharing: boolean;
+  screenShareError: string | null;
+  onToggleScreenShare: () => void;
   muted: boolean;
   onMute: () => void;
   onFinish: () => void;
