@@ -46,7 +46,7 @@ The Gemini API key is **server-side only** (as of the gateway phase, Jul 2026):
 
 ## Backend gateway (`api/`)
 
-All Gemini access goes through Vercel functions: `/api/chat` (text turns; server picks the persona, issues a `sessionId`, enforces a 40-turn ceiling), `/api/evaluate` (post-interview scoring), `/api/live-token` (voice; single-use config-locked ephemeral tokens — system instruction and voice never reach the client; `goAway` reconnects mint fresh tokens for the same persona), `/api/health`. Shared modules live in `api/_lib/` — **client code must never import from `api/_lib/`**; that boundary is what keeps prompt material (persona fragments, evaluator instructions, model ids — all in `api/_lib/prompts.ts`) out of the bundle. `constants.ts` retains only public persona names. Two build-shape constraints, learned the hard way: `api/` has its own CommonJS package scope (`api/package.json` + `api/tsconfig.json`) because Vercel's builder does per-file transpile with no bundling, and no runtime import may cross the `api/` boundary (type-only imports are fine; `prompts.test.ts` drift-guards the by-value persona roster against `constants.ts`).
+All Gemini access goes through Vercel functions: `/api/chat` (text turns; server picks the persona, issues a `sessionId`, enforces a 40-turn ceiling), `/api/evaluate` (post-interview scoring), `/api/live-token` (voice; single-use config-locked ephemeral tokens — system instruction and voice never reach the client; `goAway` reconnects mint fresh tokens for the same persona), `/api/health`. Shared modules live in `api/_lib/` — **client code must never import from `api/_lib/`**; that boundary is what keeps prompt material (persona fragments and evaluator instructions in `api/_lib/prompts.ts`, model routing in `api/_lib/modelRouting.ts`) out of the bundle. `constants.ts` retains only public persona names. Two build-shape constraints, learned the hard way: `api/` has its own CommonJS package scope (`api/package.json` + `api/tsconfig.json`) because Vercel's builder does per-file transpile with no bundling, and no runtime import may cross the `api/` boundary (type-only imports are fine; `prompts.test.ts` drift-guards the by-value persona roster against `constants.ts`).
 
 ## Architecture
 
@@ -63,13 +63,15 @@ The app uses a stage-based state machine defined by the `AppStage` enum:
 
 Interview history persists to localStorage under key `hireprep_history_v1`.
 
-### Gemini Models (constants.ts)
+### Gemini Models (`api/_lib/modelRouting.ts`)
 
-The app uses three different Gemini models for different purposes:
+The app routes Gemini requests by workload:
 
-- **TEXT_CHEF**: `gemini-3.5-flash` - Text-based chat interviews (moved off `gemini-2.5-flash` 2026-07-06; that model has an announced Oct 16, 2026 shutdown with `gemini-3.5-flash` as Google's designated GA replacement)
-- **VOICE_INTERVIEWER**: `gemini-3.1-flash-live-preview` - Real-time voice with audio streaming (stays on preview — the entire Gemini Live API is still pre-GA; no GA alternative exists for realtime audio-to-audio as of 2026-07-06)
-- **EVALUATOR**: `gemini-3.5-flash` - Generates feedback with structured JSON output (moved off the preview `gemini-3-flash-preview` 2026-07-06, per Google's own migration guidance)
+- **Interactive text + assessment deck generation**: `gemini-3.5-flash-lite`, with `gemini-3.5-flash` fallback and minimal thinking for speed and cost.
+- **Evaluation/debrief generation**: `gemini-3.8-flash`, with `gemini-3.5-flash` fallback and low thinking for stronger scoring judgment.
+- **Live voice**: `gemini-3.1-flash-live-preview` for real-time native-audio streaming.
+
+Gemini 3 sampling controls such as `temperature`, `topP`, and `topK` are intentionally omitted; use the route's explicit thinking level instead.
 
 ### Voice Interview Architecture (VoiceInterview.tsx)
 

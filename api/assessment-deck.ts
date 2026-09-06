@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup } from './_lib/validate';
-import { MODELS } from './_lib/prompts';
+import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
 import { buildAssessmentDeckPrompt, validateAssessmentDeck } from './_lib/assessmentDeck';
 import type { AssessmentDeckRequest } from '../lib/gatewayTypes';
 
@@ -48,16 +48,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const ai = new GoogleGenAI({ apiKey: key });
   let lastError: unknown;
 
-  for (const model of MODELS.TEXT_CHEF_CHAIN) {
+  for (const model of MODEL_ROUTES.ASSESSMENT_DECK.chain) {
     try {
       const response = await ai.models.generateContent({
         model,
         contents: buildAssessmentDeckPrompt(setup),
         config: {
+          ...generationConfig(MODEL_ROUTES.ASSESSMENT_DECK),
           responseMimeType: 'application/json',
           responseSchema: DECK_SCHEMA,
           maxOutputTokens: 32768,
-          temperature: 0.8,
         },
       });
       if (!response.text) {

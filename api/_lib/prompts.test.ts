@@ -3,7 +3,7 @@ import {
   SERVER_PERSONAS, PREBUILT_VOICE_IDS, getPersona, pickPersona,
   buildInterviewerSystemInstruction, INTERVIEWER_CORE,
   buildPracticeSystemInstruction, getFeedbackSystemInstruction,
-  SYSTEM_INSTRUCTION_FEEDBACK, MODELS,
+  SYSTEM_INSTRUCTION_FEEDBACK,
 } from './prompts';
 import type { ConversationSetup, RehearsalSetup, ResumeData } from '../../types';
 
@@ -177,15 +177,6 @@ describe('custom rehearsal prompts', () => {
     const out = buildPracticeSystemInstruction({ ...REHEARSAL, supportsScreenShare: true }, examiner);
     expect(out).toContain('visual evidence');
     expect(out).toContain('screen');
-  });
-});
-
-describe('MODELS', () => {
-  it('defines fallback chains with the current primaries', () => {
-    expect(MODELS.TEXT_CHEF_CHAIN[0]).toBe('gemini-3.5-flash');
-    expect(MODELS.EVALUATOR_CHAIN[0]).toBe('gemini-3.5-flash');
-    expect(MODELS.TEXT_CHEF_CHAIN.length).toBeGreaterThan(1);
-    expect(MODELS.VOICE_INTERVIEWER).toBe('gemini-3.1-flash-live-preview');
   });
 });
 

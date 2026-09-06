@@ -3,7 +3,8 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup } from './_lib/validate';
-import { MODELS, getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
+import { getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
+import { MODEL_ROUTES } from './_lib/modelRouting';
 import type { ServerPersona } from './_lib/prompts';
 import type { LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
 
@@ -44,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // reach the client. sessionResumption stays unlocked — the client
         // passes the varying resumption handle per connect.
         liveConnectConstraints: {
-          model: MODELS.VOICE_INTERVIEWER,
+          model: MODEL_ROUTES.LIVE.model,
           config: {
             responseModalities: [Modality.AUDIO],
             speechConfig: {
@@ -62,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const out: LiveTokenResponse = {
       token: token.name,
-      model: MODELS.VOICE_INTERVIEWER,
+      model: MODEL_ROUTES.LIVE.model,
       sessionId: body.reconnect && body.sessionId ? body.sessionId : crypto.randomUUID(),
       personaId: persona.id,
       personaName: persona.name,

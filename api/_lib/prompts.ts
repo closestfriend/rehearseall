@@ -14,14 +14,6 @@ const PERSONA_ROSTER: { id: string; name: string }[] = [
   { id: 'examiner', name: 'The Neutral Examiner' },
 ];
 
-// Fallback chains: newroom's adopted resilience pattern (spec §2) — try the
-// primary, fall back on failure, record the last error.
-export const MODELS = {
-  TEXT_CHEF_CHAIN: ['gemini-3.5-flash', 'gemini-3-flash-preview'],
-  EVALUATOR_CHAIN: ['gemini-3.5-flash', 'gemini-3-flash-preview'],
-  VOICE_INTERVIEWER: 'gemini-3.1-flash-live-preview',
-};
-
 export const PREBUILT_VOICE_IDS = [
   'Puck', 'Charon', 'Kore', 'Orus', 'Iapetus', 'Schedar', 'Gacrux', 'Sulafat',
 ];
