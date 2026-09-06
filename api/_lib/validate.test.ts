@@ -10,6 +10,21 @@ const CONVERSATION_SETUP = {
   context: 'I research AI harms and want a productive interdisciplinary exchange.',
   concern: 'I may use language that sounds naive in a clinical setting.',
 };
+const REHEARSAL_SETUP = {
+  kind: 'rehearsal',
+  presetId: 'ai-fluency-interview',
+  title: 'AI Fluency Interview',
+  format: 'interview',
+  domain: 'AI and evaluation',
+  description: 'Explain practical AI use.',
+  instructions: 'Probe real workflows and verification.',
+  competencies: ['AI workflows', 'verification'],
+  guidance: ['ask for a concrete failure'],
+  evaluationCriteria: ['specificity', 'calibration'],
+  targetQuestionCount: 6,
+  supportsScreenShare: false,
+  participantContext: 'I evaluate AI systems.',
+};
 
 describe('validateSetup', () => {
   it('accepts a minimal valid setup', () => {
@@ -52,6 +67,22 @@ describe('validateSetup', () => {
     expect(validateSetup({ ...CONVERSATION_SETUP, title: '   ' }).ok).toBe(false);
     expect(validateSetup({ ...CONVERSATION_SETUP, counterpart: '' }).ok).toBe(false);
     expect(validateSetup({ ...CONVERSATION_SETUP, goal: undefined }).ok).toBe(false);
+  });
+
+  it('accepts and rebuilds a bounded custom rehearsal setup', () => {
+    const r = validateSetup({ ...REHEARSAL_SETUP, unknown: 'drop me' });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value).toEqual(REHEARSAL_SETUP);
+      expect('unknown' in r.value).toBe(false);
+    }
+  });
+
+  it('rejects malformed custom rehearsal setup fields', () => {
+    expect(validateSetup({ ...REHEARSAL_SETUP, format: 'quiz' }).ok).toBe(false);
+    expect(validateSetup({ ...REHEARSAL_SETUP, competencies: ['x'.repeat(LIMITS.rehearsalItemChars + 1)] }).ok).toBe(false);
+    expect(validateSetup({ ...REHEARSAL_SETUP, guidance: Array.from({ length: LIMITS.rehearsalArrayItems + 1 }, () => 'x') }).ok).toBe(false);
+    expect(validateSetup({ ...REHEARSAL_SETUP, targetQuestionCount: 0 }).ok).toBe(false);
   });
 });
 
