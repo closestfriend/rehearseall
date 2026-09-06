@@ -179,7 +179,7 @@ const PersonalBestDebrief: React.FC<DebriefProps> = (props) => {
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: isMobile ? 24 : 40, padding: isMobile ? '32px 20px' : 48, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, letterSpacing: '-0.01em' }}>Run it again.</div>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: '#a9ad91' }}>Same situation, fresh turns, a new conversation style from the deck.</p>
+          <p style={{ margin: '8px 0 0', fontSize: 14, color: '#a9ad91' }}>Same situation, fresh questions, another chance to sharpen it.</p>
         </div>
         <div style={{ display: 'flex', gap: 14, flex: 'none', flexWrap: 'wrap' }}>
           <button

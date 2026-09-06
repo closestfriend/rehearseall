@@ -6,6 +6,8 @@ import {
   REHEARSAL_PRESETS,
   createRehearsalSetup,
   findRehearsalPresets,
+  formatRehearsalListedSize,
+  resolveRehearsalSelection,
 } from '../lib/rehearsalCatalog';
 import type { RehearsalFormat, RehearsalSetup } from '../types';
 
@@ -13,19 +15,6 @@ interface Props {
   onBack: () => void;
   onStart: (setup: RehearsalSetup) => void;
 }
-
-const listedSize = (preset: (typeof REHEARSAL_PRESETS)[number]) => {
-  if (preset.listedDurationMinutes) {
-    if (preset.listedDurationMinutes >= 60) {
-      const hours = Math.floor(preset.listedDurationMinutes / 60);
-      const minutes = preset.listedDurationMinutes % 60;
-      return `${hours}h ${minutes}m listed`;
-    }
-    return `${preset.listedDurationMinutes} min listed`;
-  }
-  if (preset.listedQuestionCount) return `${preset.listedQuestionCount} questions listed`;
-  return 'cognitive format';
-};
 
 const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
   const { theme } = useTheme();
@@ -36,6 +25,7 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
   const [domain, setDomain] = useState('all');
   const [selectedId, setSelectedId] = useState(REHEARSAL_PRESETS[0].id);
   const [participantContext, setParticipantContext] = useState('');
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const palette = transcript
     ? { canvas: '#e9e6dc', surface: '#fbfaf6', ink: '#1c1b18', muted: '#6d685c', signal: '#b3402a', rule: '#b9b4a5', soft: '#efe9d5' }
@@ -47,7 +37,7 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
     () => findRehearsalPresets(query, format, domain),
     [query, format, domain],
   );
-  const selected = REHEARSAL_PRESETS.find(preset => preset.id === selectedId) ?? results[0] ?? REHEARSAL_PRESETS[0];
+  const selected = resolveRehearsalSelection(results, selectedId) ?? REHEARSAL_PRESETS[0];
 
   const controlStyle: React.CSSProperties = {
     minHeight: 44,
@@ -79,14 +69,14 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
           </p>
         </section>
 
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '210px minmax(360px, 1fr) minmax(360px, 0.9fr)', minHeight: 720 }}>
-          <aside style={{ padding: mobile ? '18px' : '24px 20px', borderRight: mobile ? undefined : `1px ${borderStyle} ${palette.rule}`, borderBottom: mobile ? `1px ${borderStyle} ${palette.rule}` : undefined }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : '210px minmax(360px, 1fr) minmax(360px, 0.9fr)', minHeight: 720 }}>
+          <aside style={{ minWidth: 0, padding: mobile ? '18px' : '24px 20px', borderRight: mobile ? undefined : `1px ${borderStyle} ${palette.rule}`, borderBottom: mobile ? `1px ${borderStyle} ${palette.rule}` : undefined }}>
             <label style={{ display: 'block', color: palette.muted, fontSize: 12, marginBottom: 8 }} htmlFor="rehearsal-search">Search</label>
             <input id="rehearsal-search" className="rehearsal-focus" value={query} onChange={event => setQuery(event.target.value)} placeholder="Title or skill" style={{ ...controlStyle, width: '100%', boxSizing: 'border-box' }} />
 
-            <fieldset style={{ border: 0, padding: 0, margin: '24px 0 0' }}>
+            <fieldset style={{ minWidth: 0, maxWidth: '100%', border: 0, padding: 0, margin: '24px 0 0' }}>
               <legend style={{ color: palette.muted, fontSize: 12, marginBottom: 8 }}>Format</legend>
-              <div style={{ display: mobile ? 'flex' : 'grid', gap: 6, overflowX: mobile ? 'auto' : undefined }}>
+              <div style={{ display: 'grid', width: '100%', maxWidth: '100%', gap: 6 }}>
                 {(['all', 'interview', 'assessment'] as const).map(value => (
                   <button key={value} type="button" onClick={() => setFormat(value)} className="rehearsal-focus" style={{ minHeight: 40, padding: '8px 10px', textAlign: 'left', border: `1px ${borderStyle} ${format === value ? palette.signal : palette.rule}`, background: format === value ? palette.soft : 'transparent', color: format === value ? palette.signal : palette.muted, font: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     {value === 'all' ? 'All formats' : value === 'interview' ? 'Adaptive interviews' : 'Assessment decks'}
@@ -102,7 +92,7 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
             </select>
           </aside>
 
-          <main style={{ borderRight: mobile ? undefined : `1px ${borderStyle} ${palette.rule}` }}>
+          <main style={{ minWidth: 0, borderRight: mobile ? undefined : `1px ${borderStyle} ${palette.rule}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 18px', color: palette.muted, fontSize: 12, borderBottom: `1px ${borderStyle} ${palette.rule}` }}>
               <span>{results.length} rehearsals</span><span>{format === 'all' ? 'All formats' : format}</span>
             </div>
@@ -115,7 +105,10 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
                   key={preset.id}
                   type="button"
                   className="rehearsal-row rehearsal-focus"
-                  onClick={() => setSelectedId(preset.id)}
+                  onClick={() => {
+                    setSelectedId(preset.id);
+                    if (mobile) setMobileDetailOpen(true);
+                  }}
                   style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', gap: 18, alignItems: 'center', padding: '16px 18px', textAlign: 'left', border: 0, borderBottom: `1px ${borderStyle} ${palette.rule}`, borderLeft: `4px solid ${active ? palette.signal : 'transparent'}`, background: active ? palette.soft : 'transparent', color: palette.ink, font: 'inherit', cursor: 'pointer' }}
                 >
                   <span>
@@ -123,17 +116,23 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
                     <span style={{ display: 'block', marginTop: 5, fontSize: 12, color: palette.muted }}>{preset.domain}</span>
                   </span>
                   <span style={{ textAlign: 'right', color: active ? palette.signal : palette.muted, fontSize: 11.5 }}>
-                    {preset.format}<br />{listedSize(preset)}
+                    {preset.format}<br />{formatRehearsalListedSize(preset)}
                   </span>
                 </button>
               );
             })}
           </main>
 
-          <aside style={{ padding: mobile ? '28px 18px 40px' : '30px 28px', position: mobile ? undefined : 'sticky', top: 77, alignSelf: 'start' }}>
+          <aside style={{ minWidth: 0, display: mobile && !mobileDetailOpen ? 'none' : 'block', height: mobile ? '100vh' : undefined, boxSizing: mobile ? 'border-box' : undefined, padding: mobile ? '18px 18px 40px' : '30px 28px', position: mobile ? 'fixed' : 'sticky', inset: mobile ? 0 : undefined, top: mobile ? 0 : 77, zIndex: mobile ? 50 : undefined, alignSelf: 'start', overflowY: mobile ? 'auto' : undefined, background: palette.surface }}>
+            {results.length === 0 ? (
+              <p style={{ margin: 0, color: palette.muted, lineHeight: 1.6 }}>Adjust the filters to select a rehearsal brief.</p>
+            ) : <>
+            {mobile && (
+              <button type="button" onClick={() => setMobileDetailOpen(false)} style={{ minHeight: 44, marginBottom: 18, border: `1px ${borderStyle} ${palette.rule}`, background: 'transparent', color: palette.muted, font: 'inherit', padding: '0 14px', cursor: 'pointer' }}>Back to list</button>
+            )}
             <div style={{ color: palette.signal, fontSize: 12, marginBottom: 14 }}>{selected.format === 'interview' ? 'Adaptive interview' : 'Fresh question deck'}</div>
             <h2 style={{ margin: 0, fontSize: 30, lineHeight: 1.08, letterSpacing: '-0.025em' }}>{selected.title}</h2>
-            <div style={{ marginTop: 10, color: palette.muted, fontSize: 12 }}>{listedSize(selected)} · {selected.practiceQuestionCount}-question practice run</div>
+            <div style={{ marginTop: 10, color: palette.muted, fontSize: 12 }}>{formatRehearsalListedSize(selected)} · {selected.practiceQuestionCount}-question practice run</div>
             <p style={{ margin: '22px 0', lineHeight: 1.65, color: palette.muted, fontSize: 14 }}>{selected.description}</p>
 
             <div style={{ borderTop: `1px ${borderStyle} ${palette.rule}`, paddingTop: 18 }}>
@@ -167,6 +166,7 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
             >
               {selected.format === 'interview' ? 'Choose voice or text' : 'Generate practice deck'}
             </button>
+            </>}
           </aside>
         </div>
       </div>

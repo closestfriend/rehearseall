@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceTitle } from './practiceSetup';
+import {
+  isConversationSetup,
+  isRehearsalSetup,
+  practiceDetail,
+  practicePersonaLabel,
+  practiceTitle,
+} from './practiceSetup';
 import type { ConversationSetup, RehearsalSetup, ResumeData } from '../types';
 
 const interview: ResumeData = {
@@ -49,5 +55,17 @@ describe('practice setup display helpers', () => {
     expect(isRehearsalSetup(rehearsal)).toBe(true);
     expect(practiceTitle(rehearsal)).toBe('System Design Session');
     expect(practiceDetail(rehearsal)).toBe('Software and systems');
+  });
+
+  it('hides the synthetic persona label for structured assessments', () => {
+    expect(
+      practicePersonaLabel(
+        { ...rehearsal, format: 'assessment' },
+        'Structured assessment',
+      ),
+    ).toBeNull();
+    expect(practicePersonaLabel(rehearsal, 'Systems interviewer')).toBe(
+      'Systems interviewer',
+    );
   });
 });

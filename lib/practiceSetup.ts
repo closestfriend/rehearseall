@@ -21,3 +21,11 @@ export function practiceDetail(setup: PracticeSetup): string {
   if (isRehearsalSetup(setup)) return setup.domain;
   return setup.experienceLevel;
 }
+
+export function practicePersonaLabel(
+  setup: PracticeSetup,
+  personaName?: string,
+): string | null {
+  if (isRehearsalSetup(setup) && setup.format === 'assessment') return null;
+  return personaName ?? null;
+}

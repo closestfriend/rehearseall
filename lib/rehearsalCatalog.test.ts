@@ -3,7 +3,9 @@ import {
   REHEARSAL_PRESETS,
   createRehearsalSetup,
   findRehearsalPresets,
+  formatRehearsalListedSize,
   getRehearsalPreset,
+  resolveRehearsalSelection,
 } from './rehearsalCatalog';
 
 const EXPECTED_TITLES = [
@@ -85,5 +87,15 @@ describe('custom rehearsal catalog', () => {
       supportsScreenShare: true,
     });
     expect(setup.targetQuestionCount).toBe(preset!.practiceQuestionCount);
+  });
+
+  it('uses singular copy for a one-question listing', () => {
+    const preset = getRehearsalPreset('test');
+    expect(formatRehearsalListedSize(preset!)).toBe('1 question listed');
+  });
+
+  it('moves selection to the first visible result when filters hide the prior selection', () => {
+    const results = findRehearsalPresets('model response');
+    expect(resolveRehearsalSelection(results, 'hobbyist-interview')?.id).toBe('model-response-evaluation');
   });
 });
