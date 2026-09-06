@@ -1,5 +1,5 @@
-import type { PracticeSetup, InterviewMessage } from '../types';
-import type { GatewayError, ChatRequest, ChatResponse, EvaluateRequest, EvaluateResponse, LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
+import type { AssessmentAnswer, AssessmentDeck, PracticeSetup, RehearsalSetup, InterviewMessage } from '../types';
+import type { AssessmentDeckRequest, AssessmentDeckResponse, EvaluateAssessmentRequest, EvaluateAssessmentResponse, GatewayError, ChatRequest, ChatResponse, EvaluateRequest, EvaluateResponse, LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
 
 // '' = same-origin (deployed + vercel dev). Set VITE_API_BASE to a deployed
 // preview URL when running plain `npm run dev` / `npm run dev:phone`, which
@@ -50,4 +50,18 @@ export function sendChatTurn(body: ChatRequest): Promise<ChatResponse> {
 
 export function mintLiveToken(body: LiveTokenRequest): Promise<LiveTokenResponse> {
   return post<LiveTokenResponse>('/api/live-token', body);
+}
+
+export function generateAssessmentDeck(setup: RehearsalSetup): Promise<AssessmentDeckResponse> {
+  const body: AssessmentDeckRequest = { setup };
+  return post<AssessmentDeckResponse>('/api/assessment-deck', body);
+}
+
+export function evaluateAssessment(
+  setup: RehearsalSetup,
+  deck: AssessmentDeck,
+  answers: AssessmentAnswer[],
+): Promise<EvaluateAssessmentResponse> {
+  const body: EvaluateAssessmentRequest = { setup, deck, answers };
+  return post<EvaluateAssessmentResponse>('/api/evaluate-assessment', body);
 }
