@@ -7,6 +7,7 @@ import TranscriptHome from './transcript/Home';
 interface Props {
   history: HistoryEntry[];
   onStartInterview: () => void;
+  onBrowseRehearsals: () => void;
   onViewSession: (entry: HistoryEntry) => void;
   onViewSessionLog: () => void;
 }
