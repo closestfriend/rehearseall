@@ -52,6 +52,34 @@ export interface RehearsalSetup {
   participantContext: string;
 }
 
+export type AssessmentQuestionType =
+  | 'single-choice'
+  | 'multiple-choice'
+  | 'short-text'
+  | 'long-text';
+
+export interface AssessmentQuestion {
+  id: string;
+  type: AssessmentQuestionType;
+  prompt: string;
+  stimulus?: string;
+  options?: string[];
+  answerKey?: string[];
+  evaluationCriteria: string[];
+  rationale: string;
+}
+
+export interface AssessmentDeck {
+  title: string;
+  instructions: string;
+  questions: AssessmentQuestion[];
+}
+
+export interface AssessmentAnswer {
+  questionId: string;
+  value: string | string[];
+}
+
 export type PracticeSetup = ResumeData | ConversationSetup | RehearsalSetup;
 
 export interface InterviewMessage {
