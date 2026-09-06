@@ -9,6 +9,7 @@ import ThemedModePicker from './components/theme/ThemedModePicker';
 import ThemedDebrief from './components/theme/ThemedDebrief';
 import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import RehearsalLibrary from './components/RehearsalLibrary';
+import AssessmentRunner from './components/AssessmentRunner';
 import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry, PracticeSetup, RehearsalSetup } from './types';
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
@@ -237,6 +238,28 @@ const App: React.FC = () => {
     }
   };
 
+  const processAssessmentResults = (
+    result: InterviewFeedback,
+    transcript: InterviewMessage[],
+  ) => {
+    const personaName = 'Structured assessment';
+    setFeedback(result);
+    setFeedbackError(null);
+    setCurrentTranscript(transcript);
+    setCurrentMode('text');
+    setDisplayPersonaName(personaName);
+    saveToHistory({
+      id: crypto.randomUUID(),
+      date: Date.now(),
+      resume: { ...rehearsalData },
+      transcript,
+      feedback: result,
+      personaName,
+      mode: 'text',
+    });
+    setStage(AppStage.FEEDBACK);
+  };
+
   const retryFeedback = () => {
     if (currentTranscript.length > 0) {
       processInterviewResults(currentTranscript);
@@ -420,9 +443,10 @@ ${transcriptMd}
         />
       );
       case AppStage.ASSESSMENT_ACTIVE: return (
-        <RehearsalLibrary
-          onBack={() => setStage(AppStage.LANDING)}
-          onStart={startCustomRehearsal}
+        <AssessmentRunner
+          setup={rehearsalData}
+          onComplete={processAssessmentResults}
+          onCancel={() => setStage(AppStage.REHEARSAL_LIBRARY)}
         />
       );
       case AppStage.FEEDBACK: return (
