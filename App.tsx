@@ -17,11 +17,13 @@ import { LAST_PERSONA_STORAGE_KEY } from './constants';
 import { isConversationSetup, isRehearsalSetup, practiceDetail, practicePersonaLabel, practiceTitle } from './lib/practiceSetup';
 import { createRehearsalSetup, REHEARSAL_PRESETS } from './lib/rehearsalCatalog';
 import { destinationForRehearsal } from './lib/rehearsalNavigation';
-import { resetStageScroll } from './lib/stageEffects';
+import { resetStageScroll, shouldShowHomeButton } from './lib/stageEffects';
+import { useTheme } from './contexts/ThemeContext';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
 const App: React.FC = () => {
+  const { theme } = useTheme();
   const [stage, setStage] = useState<AppStage>(AppStage.LANDING);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [practiceKind, setPracticeKind] = useState<'conversation' | 'interview' | 'rehearsal'>('conversation');
@@ -496,9 +498,49 @@ ${transcriptMd}
     }
   };
 
-  // Every stage now renders themed, full-bleed chrome — the old Layout
-  // wrapper (components/Layout.tsx) is no longer mounted anywhere.
-  return getStageContent();
+  const transcriptTheme = theme === 'transcript';
+
+  // Every stage renders themed, full-bleed chrome. This shell-level control is
+  // deliberately independent of page headers so every present and future
+  // non-home stage has the same direct escape hatch.
+  return (
+    <>
+      {shouldShowHomeButton(stage) && (
+        <button
+          type="button"
+          aria-label="Return home"
+          title="Return home"
+          onClick={() => setStage(AppStage.LANDING)}
+          style={{
+            position: 'fixed',
+            top: '50%',
+            right: 0,
+            zIndex: 1000,
+            transform: 'translateY(-50%)',
+            minWidth: 42,
+            minHeight: 88,
+            padding: '14px 10px',
+            border: transcriptTheme ? '1px solid #1c1b18' : '1px solid #d4f222',
+            borderRight: 0,
+            borderRadius: '7px 0 0 7px',
+            background: transcriptTheme ? '#fbfaf6' : '#d4f222',
+            color: transcriptTheme ? '#b3402a' : '#101208',
+            boxShadow: transcriptTheme ? '-3px 4px 14px rgba(28,27,24,.14)' : '-3px 4px 18px rgba(0,0,0,.3)',
+            cursor: 'pointer',
+            fontFamily: transcriptTheme ? "'IBM Plex Mono', ui-monospace, monospace" : "'Space Grotesk', sans-serif",
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: '0.16em',
+            lineHeight: 1,
+            writingMode: 'vertical-rl',
+          }}
+        >
+          HOME
+        </button>
+      )}
+      {getStageContent()}
+    </>
+  );
 };
 
 export default App;

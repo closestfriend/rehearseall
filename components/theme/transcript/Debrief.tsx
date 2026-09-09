@@ -194,7 +194,7 @@ const TranscriptDebrief: React.FC<DebriefProps> = (props) => {
             onClick={onBackToDashboard}
             style={{ border: '1px solid #1c1b18', padding: '14px 22px', fontSize: 12.5, fontWeight: 600, background: 'none', fontFamily: 'inherit', cursor: 'pointer', minHeight: 44 }}
           >
-            DASHBOARD
+            HOME
           </button>
           <button
             type="button"

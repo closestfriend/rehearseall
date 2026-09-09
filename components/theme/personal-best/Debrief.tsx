@@ -187,7 +187,7 @@ const PersonalBestDebrief: React.FC<DebriefProps> = (props) => {
             onClick={onBackToDashboard}
             style={{ border: '1px solid #3a3e24', padding: '16px 28px', fontSize: 14, fontWeight: 600, color: '#f2f4e4', background: 'none', cursor: 'pointer', minHeight: 44, boxSizing: 'border-box', flex: isMobile ? '1 1 calc(50% - 7px)' : 'none' }}
           >
-            DASHBOARD
+            HOME
           </button>
           <button
             type="button"
