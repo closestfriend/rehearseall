@@ -67,8 +67,8 @@ Interview history persists to localStorage under key `hireprep_history_v1`.
 
 The app routes Gemini requests by workload:
 
-- **Interactive text + assessment deck generation**: `gemini-3.5-flash-lite`, with `gemini-3.5-flash` fallback and minimal thinking for speed and cost.
-- **Evaluation/debrief generation**: `gemini-3.8-flash`, with `gemini-3.5-flash` fallback and low thinking for stronger scoring judgment.
+- **Interactive text generation**: `gemini-3.5-flash-lite`, with `gemini-3.5-flash` fallback and minimal thinking for low-latency, repeated turns.
+- **Assessment deck + evaluation/debrief generation**: `gemini-3.8-flash`, with `gemini-3.5-flash` fallback and low thinking for stronger topical selection and judgment.
 - **Live voice**: `gemini-3.1-flash-live-preview` for real-time native-audio streaming.
 
 Gemini 3 sampling controls such as `temperature`, `topP`, and `topK` are intentionally omitted; use the route's explicit thinking level instead.
