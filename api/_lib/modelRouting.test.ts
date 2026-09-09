@@ -13,13 +13,13 @@ describe('Gemini model routing', () => {
     });
   });
 
-  it('uses the economical Flash-Lite model with minimal thinking for assessment decks', () => {
+  it('uses the current Flash model with low thinking for assessment decks', () => {
     expect(MODEL_ROUTES.ASSESSMENT_DECK.chain).toEqual([
-      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
       'gemini-3.5-flash',
     ]);
     expect(generationConfig(MODEL_ROUTES.ASSESSMENT_DECK)).toEqual({
-      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     });
   });
 
