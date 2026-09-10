@@ -3,33 +3,33 @@ import { ThinkingLevel } from '@google/genai';
 import { MODEL_ROUTES, generationConfig } from './modelRouting';
 
 describe('Gemini model routing', () => {
-  it('uses the economical Flash-Lite model with minimal thinking for live text turns', () => {
+  it('uses the strongest Flash model at low latency for live text turns', () => {
     expect(MODEL_ROUTES.INTERACTIVE.chain).toEqual([
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
     ]);
     expect(generationConfig(MODEL_ROUTES.INTERACTIVE)).toEqual({
-      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     });
   });
 
-  it('uses the current Flash model with low thinking for assessment decks', () => {
+  it('gives assessment generation balanced thinking on the strongest Flash models', () => {
     expect(MODEL_ROUTES.ASSESSMENT_DECK.chain).toEqual([
       'gemini-3.8-flash',
-      'gemini-3.5-flash',
+      'gemini-3.7-flash',
     ]);
     expect(generationConfig(MODEL_ROUTES.ASSESSMENT_DECK)).toEqual({
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
     });
   });
 
-  it('uses the strongest current Flash model with low thinking for debriefs', () => {
+  it('gives debriefs balanced thinking on the strongest Flash models', () => {
     expect(MODEL_ROUTES.EVALUATION.chain).toEqual([
       'gemini-3.8-flash',
-      'gemini-3.5-flash',
+      'gemini-3.7-flash',
     ]);
     expect(generationConfig(MODEL_ROUTES.EVALUATION)).toEqual({
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
     });
   });
 

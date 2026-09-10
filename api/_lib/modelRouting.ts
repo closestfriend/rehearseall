@@ -13,16 +13,16 @@ interface LiveGenerationRoute {
 // Keep fallbacks on models that accept the same thinking configuration.
 export const MODEL_ROUTES = {
   INTERACTIVE: {
-    chain: ['gemini-3.5-flash-lite', 'gemini-3.5-flash'],
-    thinkingLevel: ThinkingLevel.MINIMAL,
+    chain: ['gemini-3.8-flash', 'gemini-3.7-flash'],
+    thinkingLevel: ThinkingLevel.LOW,
   },
   ASSESSMENT_DECK: {
-    chain: ['gemini-3.8-flash', 'gemini-3.5-flash'],
-    thinkingLevel: ThinkingLevel.LOW,
+    chain: ['gemini-3.8-flash', 'gemini-3.7-flash'],
+    thinkingLevel: ThinkingLevel.MEDIUM,
   },
   EVALUATION: {
-    chain: ['gemini-3.8-flash', 'gemini-3.5-flash'],
-    thinkingLevel: ThinkingLevel.LOW,
+    chain: ['gemini-3.8-flash', 'gemini-3.7-flash'],
+    thinkingLevel: ThinkingLevel.MEDIUM,
   },
   LIVE: {
     model: 'gemini-3.1-flash-live-preview',
