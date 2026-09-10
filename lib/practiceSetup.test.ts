@@ -3,6 +3,7 @@ import {
   isConversationSetup,
   isRehearsalSetup,
   practiceDetail,
+  practiceLengthLabel,
   practicePersonaLabel,
   practiceTitle,
 } from './practiceSetup';
@@ -40,6 +41,12 @@ const rehearsal: RehearsalSetup = {
 };
 
 describe('practice setup display helpers', () => {
+  it('does not force an open conversation agenda into a generic 5–7-question label', () => {
+    expect(practiceLengthLabel(conversation)).toBe('adaptive conversation');
+    expect(practiceLengthLabel(rehearsal)).toBe('7 planned questions');
+    expect(practiceLengthLabel(interview)).toBe('5–7 questions');
+  });
+
   it('uses the target role and level for an interview rehearsal', () => {
     expect(practiceTitle(interview)).toBe('Research Scientist');
     expect(practiceDetail(interview)).toBe('senior');

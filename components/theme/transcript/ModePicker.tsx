@@ -5,6 +5,7 @@ import { useIsMobile } from '../hooks';
 interface ModePickerProps {
   roleLabel: string;
   levelLabel: string;
+  lengthLabel: string;
   mode: 'voice' | 'text';
   onModeChange: (m: 'voice' | 'text') => void;
   onStart: () => void;
@@ -35,6 +36,7 @@ const ElectedStamp: React.FC = () => (
 const TranscriptModePicker: React.FC<ModePickerProps> = ({
   roleLabel,
   levelLabel,
+  lengthLabel,
   mode,
   onModeChange,
   onStart,
@@ -150,7 +152,7 @@ const TranscriptModePicker: React.FC<ModePickerProps> = ({
                 <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.8, color: '#54503f', textWrap: 'pretty' }}>
                   You speak; the reporter transcribes. Follow-ups arrive in real time — nearest thing to the actual hearing.
                 </p>
-                <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8471' }}>5–7 questions · timed pacing · microphone required</div>
+                <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8471' }}>{lengthLabel} · timed pacing · microphone required</div>
               </div>
 
               {/* TEXT CARD */}
@@ -178,7 +180,7 @@ const TranscriptModePicker: React.FC<ModePickerProps> = ({
                 <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.8, color: '#54503f', textWrap: 'pretty' }}>
                   Typed testimony, untimed. Same follow-ups, same findings — with room to compose before you submit.
                 </p>
-                <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8471' }}>5–7 questions · untimed · no microphone needed</div>
+                <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8471' }}>{lengthLabel} · untimed · no microphone needed</div>
               </div>
             </div>
 

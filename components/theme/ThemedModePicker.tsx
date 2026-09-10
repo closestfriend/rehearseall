@@ -6,6 +6,7 @@ import TranscriptModePicker from './transcript/ModePicker';
 interface Props {
   roleLabel: string;
   levelLabel: string;
+  lengthLabel: string;
   mode: 'voice' | 'text';
   onModeChange: (m: 'voice' | 'text') => void;
   onStart: () => void;
