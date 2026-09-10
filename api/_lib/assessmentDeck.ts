@@ -60,12 +60,13 @@ PARTICIPANT CONTEXT: ${setup.participantContext.trim() || 'none provided'}
 
 Return exactly ${setup.targetQuestionCount} questions. Use only single-choice,
 multiple-choice, short-text, and long-text item types. Make every question
-self-contained and original. Choice items need 2-8 unique options and an answer
-key drawn from those options. Every item needs evaluation criteria and a private
-rationale. If an item represents visual, video, or audio source material, put a
-textual representation in stimulus and begin it with "SIMULATED" so the interface
-cannot imply real media was presented. Do not reveal answer keys or rationales in
-the prompt or stimulus.`;
+self-contained and original. Always return options and answerKey arrays. Choice
+items need 2-8 unique options and a non-empty answer key drawn from those options;
+for text items, return empty options and answerKey arrays. Every item needs
+evaluation criteria and a private rationale. If an item represents visual, video,
+or audio source material, put a textual representation in stimulus and begin it
+with "SIMULATED" so the interface cannot imply real media was presented. Do not
+reveal answer keys or rationales in the prompt or stimulus.`;
 }
 
 function validateQuestion(raw: unknown): AssessmentValidated<AssessmentQuestion> {
@@ -93,8 +94,9 @@ function validateQuestion(raw: unknown): AssessmentValidated<AssessmentQuestion>
     if (q.answerKey.some(answer => !(q.options as string[]).includes(answer)))
       return { ok: false, reason: 'question.answerKey option' };
   } else {
-    if (q.options !== undefined) return { ok: false, reason: 'question.options text' };
-    if (q.answerKey !== undefined && !isBoundedStringArray(q.answerKey, LIMITS.options, LIMITS.option))
+    if (q.options !== undefined && (!Array.isArray(q.options) || q.options.length !== 0))
+      return { ok: false, reason: 'question.options text' };
+    if (q.answerKey !== undefined && (!Array.isArray(q.answerKey) || q.answerKey.length !== 0))
       return { ok: false, reason: 'question.answerKey text' };
   }
 
@@ -105,8 +107,8 @@ function validateQuestion(raw: unknown): AssessmentValidated<AssessmentQuestion>
       type: q.type as AssessmentQuestionType,
       prompt: q.prompt,
       ...(q.stimulus === undefined ? {} : { stimulus: q.stimulus as string }),
-      ...(q.options === undefined ? {} : { options: [...q.options as string[]] }),
-      ...(q.answerKey === undefined ? {} : { answerKey: [...q.answerKey as string[]] }),
+      ...(!Array.isArray(q.options) || q.options.length === 0 ? {} : { options: [...q.options as string[]] }),
+      ...(!Array.isArray(q.answerKey) || q.answerKey.length === 0 ? {} : { answerKey: [...q.answerKey as string[]] }),
       evaluationCriteria: [...q.evaluationCriteria as string[]],
       rationale: q.rationale,
     },

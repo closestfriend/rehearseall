@@ -19,7 +19,7 @@ const QUESTION_SCHEMA = {
     evaluationCriteria: { type: Type.ARRAY, items: { type: Type.STRING } },
     rationale: { type: Type.STRING },
   },
-  required: ['id', 'type', 'prompt', 'evaluationCriteria', 'rationale'],
+  required: ['id', 'type', 'prompt', 'options', 'answerKey', 'evaluationCriteria', 'rationale'],
 };
 
 const DECK_SCHEMA = {
