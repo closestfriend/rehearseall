@@ -1,5 +1,7 @@
 import type { RehearsalFormat, RehearsalPreset, RehearsalSetup } from '../types';
 
+export { HUNTER_REHEARSALS } from './hunterRehearsals';
+
 type PresetInput = Omit<
   RehearsalPreset,
   'collection' | 'sourceConfidence' | 'supportsScreenShare'

@@ -5,6 +5,7 @@ import { useIsMobile } from '../hooks';
 interface ModePickerProps {
   roleLabel: string;
   levelLabel: string;
+  lengthLabel: string;
   mode: 'voice' | 'text';
   onModeChange: (m: 'voice' | 'text') => void;
   onStart: () => void;
@@ -60,6 +61,7 @@ const ModeCard: React.FC<ModeCardProps> = ({ selected, onSelect, icon, label, ti
 const PersonalBestModePicker: React.FC<ModePickerProps> = ({
   roleLabel,
   levelLabel,
+  lengthLabel,
   mode,
   onModeChange,
   onStart,
@@ -151,7 +153,7 @@ const PersonalBestModePicker: React.FC<ModePickerProps> = ({
             label="VOICE REP"
             title="Out loud, in the moment."
             description="You speak, it listens. Real-time follow-ups, real pacing — the closest thing to the actual room."
-            footnote="5–7 questions · timed pacing · mic required"
+            footnote={`${lengthLabel} · timed pacing · mic required`}
           />
           <ModeCard
             selected={mode === 'text'}
@@ -165,7 +167,7 @@ const PersonalBestModePicker: React.FC<ModePickerProps> = ({
             label="TEXT REP"
             title="Typed, on your clock."
             description="Write your answers, untimed. Same follow-ups, same scoring — with room to structure before you submit."
-            footnote="5–7 questions · untimed · no mic needed"
+            footnote={`${lengthLabel} · untimed · no mic needed`}
           />
         </div>
 

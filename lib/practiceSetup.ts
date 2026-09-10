@@ -22,6 +22,15 @@ export function practiceDetail(setup: PracticeSetup): string {
   return setup.experienceLevel;
 }
 
+export function practiceLengthLabel(setup: PracticeSetup): string {
+  if (isConversationSetup(setup)) return 'adaptive conversation';
+  if (isRehearsalSetup(setup)) {
+    const unit = setup.targetQuestionCount === 1 ? 'question' : 'questions';
+    return `${setup.targetQuestionCount} planned ${unit}`;
+  }
+  return '5–7 questions';
+}
+
 export function practicePersonaLabel(
   setup: PracticeSetup,
   personaName?: string,

@@ -14,9 +14,9 @@ import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFee
 import { evaluateInterview } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { LAST_PERSONA_STORAGE_KEY } from './constants';
-import { isConversationSetup, isRehearsalSetup, practiceDetail, practicePersonaLabel, practiceTitle } from './lib/practiceSetup';
+import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceLengthLabel, practicePersonaLabel, practiceTitle } from './lib/practiceSetup';
 import { createRehearsalSetup, REHEARSAL_PRESETS } from './lib/rehearsalCatalog';
-import { destinationForRehearsal } from './lib/rehearsalNavigation';
+import { destinationForPreloadedPractice, destinationForRehearsal } from './lib/rehearsalNavigation';
 import { resetStageScroll, shouldShowHomeButton } from './lib/stageEffects';
 import { useTheme } from './contexts/ThemeContext';
 
@@ -138,13 +138,18 @@ const App: React.FC = () => {
     }
   };
 
-  const startCustomRehearsal = (setup: RehearsalSetup) => {
-    setPracticeKind('rehearsal');
-    setRehearsalData(setup);
+  const startCustomRehearsal = (setup: ConversationSetup | RehearsalSetup) => {
+    if (setup.kind === 'conversation') {
+      setPracticeKind('conversation');
+      setConversationData({ ...setup });
+    } else {
+      setPracticeKind('rehearsal');
+      setRehearsalData(setup);
+    }
     setFeedback(null);
     setCurrentTranscript([]);
     setDisplayPersonaName(null);
-    setStage(destinationForRehearsal(setup));
+    setStage(destinationForPreloadedPractice(setup));
   };
 
   const handleFileSelected = async (file: File) => {
@@ -386,6 +391,7 @@ ${transcriptMd}
     <ThemedModePicker
       roleLabel={practiceTitle(activeSetup)}
       levelLabel={practiceDetail(activeSetup)}
+      lengthLabel={practiceLengthLabel(activeSetup)}
       mode={selectedMode}
       onModeChange={setSelectedMode}
       onStart={() => startInterview(selectedMode === 'voice' ? AppStage.INTERVIEWING_VOICE : AppStage.INTERVIEWING_TEXT)}
