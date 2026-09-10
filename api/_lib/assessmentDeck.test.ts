@@ -61,6 +61,21 @@ describe('assessment deck construction', () => {
     }
   });
 
+  it('accepts schema-required empty choice fields on text questions and strips them', () => {
+    const generatedDeck = {
+      ...VALID_DECK,
+      questions: [
+        VALID_DECK.questions[0],
+        { ...VALID_DECK.questions[1], options: [], answerKey: [] },
+      ],
+    };
+
+    const result = validateAssessmentDeck(generatedDeck, 2);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toEqual(VALID_DECK);
+  });
+
   it('rejects wrong counts, duplicate ids, and unsupported item types', () => {
     expect(validateAssessmentDeck({ ...VALID_DECK, questions: [VALID_DECK.questions[0]] }, 2).ok).toBe(false);
     expect(validateAssessmentDeck({ ...VALID_DECK, questions: [VALID_DECK.questions[0], { ...VALID_DECK.questions[1], id: 'q1' }] }, 2).ok).toBe(false);
