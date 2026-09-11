@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   SERVER_PERSONAS, PREBUILT_VOICE_IDS, getPersona, pickPersona,
   buildInterviewerSystemInstruction, INTERVIEWER_CORE,
-  buildPracticeSystemInstruction, getFeedbackSystemInstruction,
+  buildPracticeKickoff, buildPracticeSystemInstruction, getFeedbackSystemInstruction,
   SYSTEM_INSTRUCTION_FEEDBACK,
 } from './prompts';
 import type { ConversationSetup, RehearsalSetup, ResumeData } from '../../types';
@@ -80,9 +80,11 @@ describe('buildInterviewerSystemInstruction', () => {
     expect(out).toContain('ENGLISH');
   });
 
-  it('includes the persona fragment and name', () => {
-    expect(out).toContain(skeptic.name);
-    expect(out).toContain('evidence-driven');
+  it('treats interviewer variation as a light secondary tendency, not a character', () => {
+    expect(out).toContain('LIGHT DELIVERY TENDENCY (SECONDARY)');
+    expect(out).toContain('not a character or roleplay instruction');
+    expect(out).not.toContain('PERSONA —');
+    expect(out).not.toContain('You are a sharp, evidence-driven interviewer');
   });
 
   it('injects the resume context', () => {
@@ -143,6 +145,22 @@ describe('open rehearsal prompts', () => {
     expect(out).not.toContain('conducting a job interview');
   });
 
+  it('uses private concerns as guardrails without manufacturing pressure from them', () => {
+    const out = buildPracticeSystemInstruction(CONVERSATION, skeptic);
+    expect(out).toContain('Respond first to what the user actually says');
+    expect(out).toContain('Do not manufacture conflict');
+    expect(out).toContain('private guardrail');
+    expect(out).not.toContain('create useful pressure');
+    expect(out).not.toContain('COUNTERPART STYLE');
+  });
+
+  it('opens an important conversation as a conversation rather than an interview', () => {
+    expect(buildPracticeKickoff(CONVERSATION)).toBe(
+      'Hello. Begin the conversation naturally as the stated counterpart.',
+    );
+    expect(buildPracticeKickoff(CONVERSATION).toLowerCase()).not.toContain('interview');
+  });
+
   it('selects a conversation debrief rubric without interview scoring language', () => {
     const out = getFeedbackSystemInstruction(CONVERSATION);
     expect(out).toContain('goal advancement');
@@ -164,6 +182,8 @@ describe('custom rehearsal prompts', () => {
     expect(out).toContain('one question at a time');
     expect(out).toContain('independent practice approximation');
     expect(out.toLowerCase()).toContain('concludes our interview');
+    expect(out).toContain('LIGHT DELIVERY TENDENCY (SECONDARY)');
+    expect(out).not.toContain('EVALUATOR STYLE');
   });
 
   it('selects the preset evaluation criteria for the debrief', () => {

@@ -3,12 +3,9 @@ import { GoogleGenAI } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError } from './_lib/http';
 import { validateSetup, validateMessages } from './_lib/validate';
-import { getPersona, pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
+import { getPersona, pickPersona, buildPracticeKickoff, buildPracticeSystemInstruction } from './_lib/prompts';
 import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
 import type { ChatRequest, ChatResponse } from '../lib/gatewayTypes';
-
-// The hidden opening user turn — moved from InterviewChat.tsx's initChat.
-const KICKOFF = 'Hello. Please introduce yourself and start the interview.';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
@@ -31,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!persona) return sendError(res, 400, 'bad_request', `chat: unknown personaId ${body.personaId}`);
 
   const contents = [
-    { role: 'user' as const, parts: [{ text: KICKOFF }] },
+    { role: 'user' as const, parts: [{ text: buildPracticeKickoff(setup.value) }] },
     ...messages.value.map(m => ({
       role: m.role === 'user' ? ('user' as const) : ('model' as const),
       parts: [{ text: m.content }],
