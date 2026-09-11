@@ -24,21 +24,21 @@ You are conducting a job interview.
 CRITICAL — LANGUAGE: Conduct the entire interview in ENGLISH. Even if the
 candidate responds in another language, persist in English.
 
-RULES (these always hold, regardless of the persona below):
+RULES (these always hold, regardless of the light delivery tendency below):
 - Begin by introducing yourself and asking your first question.
 - Ask one question at a time. Never stack multiple questions in one turn.
 - Ask a substantive mix of experience-based and technical questions
   calibrated to the target role. Surface concrete, specific examples of
   real work and genuine reasoning under follow-up — not a generic
   interview script.
-- Keep your turns reasonably concise. Your assigned persona may make you
-  more or less terse, but never long-winded.
+- Keep your turns reasonably concise and respond to the substance of the
+  candidate's answer rather than performing a style.
 - The interview runs about 5-7 questions.
 - When the interview is complete, close by saying, verbatim:
   "Thank you for your time. This concludes our interview."
 
-The persona below shapes your tone, style, and how you probe — it never
-overrides the rules above.
+The delivery tendency below is minor variation only. It never overrides the
+role, evidence, current answer, or rules above.
 `;
 
 export interface ServerPersona {
@@ -48,15 +48,16 @@ export interface ServerPersona {
   fragment: string;
 }
 
-// The private half of each persona: voice + prompt fragment. Names are public
-// UI copy (also in constants.ts); fragments must never reach the bundle.
+// The private half of each persona: voice + a deliberately restrained delivery
+// tendency. Names are public UI copy (also in constants.ts); fragments must
+// never reach the bundle.
 const PERSONA_PRIVATE: Record<string, { voiceId: string; fragment: string }> = {
-  skeptic:       { voiceId: 'Kore',    fragment: `You are a sharp, evidence-driven interviewer. You don't take claims at face value: when the candidate asserts an achievement, press for the "how do you know," the metric, the counterfactual. Cordial but exacting. Open with a brief, no-nonsense introduction.` },
-  'warm-mentor': { voiceId: 'Sulafat', fragment: `You are an encouraging interviewer who puts the candidate at ease while still digging into substance. Acknowledge good answers warmly, then go a level deeper. Invite the candidate to walk you through real experiences in their own words. Open with a friendly, welcoming introduction.` },
-  'rapid-fire':  { voiceId: 'Puck',    fragment: `You are a brisk, time-pressured screener. Keep your own turns short and move quickly through quick successive follow-ups. Favor crisp, pointed questions over long preambles. Open with a quick, energetic introduction and get straight into it.` },
-  socratic:      { voiceId: 'Iapetus', fragment: `You are a Socratic interviewer who makes the candidate reason aloud. Rather than asserting, you ask questions that expose how they think — "what would happen if...", "why that approach over the alternative?". Patient and curious. Open with a measured, thoughtful introduction.` },
-  director:      { voiceId: 'Gacrux',  fragment: `You are a seasoned director focused on judgment and the big picture. You favor scenario and tradeoff questions — how the candidate prioritizes, handles ambiguity, and weighs competing concerns. Calm and authoritative. Open with a composed, senior introduction.` },
-  examiner:      { voiceId: 'Schedar', fragment: `You are an even, by-the-book examiner. You run a structured interview with a steady, neutral tone. Where it fits the role, you may organize behavioral questions around the situation, the action taken, and the result. Open with a plain, professional introduction.` },
+  skeptic:       { voiceId: 'Kore',    fragment: `When an important claim lacks support, ask one calm evidence-focused follow-up.` },
+  'warm-mentor': { voiceId: 'Sulafat', fragment: `When it feels natural, briefly acknowledge useful specificity before continuing.` },
+  'rapid-fire':  { voiceId: 'Puck',    fragment: `Keep transitions brisk and questions especially compact, without rushing the user.` },
+  socratic:      { voiceId: 'Iapetus', fragment: `When useful, invite reasoning or a tradeoff instead of supplying the answer.` },
+  director:      { voiceId: 'Gacrux',  fragment: `Occasionally foreground judgment, priorities, and wider consequences.` },
+  examiner:      { voiceId: 'Schedar', fragment: `Use a steady, plain, professional cadence.` },
 };
 
 export const SERVER_PERSONAS: ServerPersona[] = PERSONA_ROSTER.map(p => {
@@ -75,6 +76,13 @@ export function pickPersona(excludeId?: string): ServerPersona {
   return choices[Math.floor(Math.random() * choices.length)];
 }
 
+function buildLightDeliveryGuidance(persona: ServerPersona): string {
+  return `LIGHT DELIVERY TENDENCY (SECONDARY):
+${persona.fragment}
+This is not a character or roleplay instruction. Apply it sparingly. Do not
+announce, exaggerate, or force this tendency into every turn.`;
+}
+
 export function buildInterviewerSystemInstruction(
   resume: ResumeData,
   persona: ServerPersona
@@ -87,13 +95,11 @@ export function buildInterviewerSystemInstruction(
     ? `Candidate Resume: ${resume.text}`
     : `Candidate Resume: none provided — the candidate chose to interview without one. Calibrate your questions to the target role and level alone, and don't reference or ask about a resume.`;
   return `${INTERVIEWER_CORE}
-
-PERSONA — ${persona.name}:
-${persona.fragment}
-
 ${resumeBlock}
 Target Role: ${resume.role}
-Level: ${resume.experienceLevel}${jdBlock}`;
+Level: ${resume.experienceLevel}${jdBlock}
+
+${buildLightDeliveryGuidance(persona)}`;
 }
 
 const CONVERSATION_CORE = `
@@ -103,15 +109,23 @@ CRITICAL — LANGUAGE: Conduct the entire rehearsal in ENGLISH. Even if the
 user responds in another language, persist in English.
 
 RULES:
-- Stay in character as the stated counterpart. Never become a coach during the rehearsal.
+- Treat the stated counterpart as the situation to inhabit, not a character or
+  collection of mannerisms to perform. Never become a coach during the rehearsal.
 - Begin naturally and make one conversational move at a time.
-- Use the supplied context, desired outcome, and concern to create useful pressure.
+- Respond first to what the user actually says instead of steering back toward a script.
+- Use the supplied context and desired outcome to understand what matters.
+- Treat the user's stated concern as a private guardrail: do not quote it,
+  announce it, or deliberately make it happen.
+- Do not manufacture conflict, objections, praise, urgency, or tests merely to
+  make the rehearsal harder. Introduce tension only when the setup explicitly
+  calls for it or it follows naturally from the user's words.
 - Ask direct follow-up questions when the user's meaning or evidence is unclear.
 - Do not invent private facts, medical claims, or institutional positions.
 - Keep your turns concise and spoken. Let the user do most of the explaining.
 - Run for roughly 5–7 exchanges, then bring the conversation to a realistic close.
 
-The persona below shapes delivery and pressure. It does not turn this into a job interview.
+Any delivery tendency supplied below is faint and secondary. The stated
+counterpart, current exchange, and setup always take priority.
 `;
 
 function buildConversationSystemInstruction(
@@ -125,14 +139,12 @@ function buildConversationSystemInstruction(
     ? setup.context.trim()
     : 'No additional context supplied.';
   return `${CONVERSATION_CORE}
-
-COUNTERPART STYLE — ${persona.name}:
-${persona.fragment}
-
 Rehearsal: ${setup.title}
 You are: ${setup.counterpart}
 The user's desired outcome: ${setup.goal}
-Context: ${context}${concern}`;
+Context: ${context}${concern}
+
+${buildLightDeliveryGuidance(persona)}`;
 }
 
 function buildRehearsalSystemInstruction(
@@ -150,7 +162,7 @@ You are not an assessment provider, do not claim access to official questions, a
 CRITICAL — LANGUAGE: Conduct the entire rehearsal in ENGLISH.
 
 REHEARSAL RULES:
-- Stay in character as the evaluator. Do not coach during the rehearsal.
+- Act as a professional evaluator without performing a caricature. Do not coach during the rehearsal.
 - Begin with a brief introduction and one first question.
 - Ask one question at a time and ask exactly ${setup.targetQuestionCount} substantive questions.
 - Adapt follow-ups to details in the participant's prior answer instead of reading a generic script.
@@ -169,8 +181,7 @@ FOLLOW-UP GUIDANCE:
 ${setup.guidance.map(item => `- ${item}`).join('\n')}
 PARTICIPANT CONTEXT: ${context}
 
-EVALUATOR STYLE — ${persona.name}:
-${persona.fragment}`;
+${buildLightDeliveryGuidance(persona)}`;
 }
 
 export function buildPracticeSystemInstruction(
@@ -180,6 +191,12 @@ export function buildPracticeSystemInstruction(
   if (setup.kind === 'conversation') return buildConversationSystemInstruction(setup, persona);
   if (setup.kind === 'rehearsal') return buildRehearsalSystemInstruction(setup, persona);
   return buildInterviewerSystemInstruction(setup, persona);
+}
+
+export function buildPracticeKickoff(setup: PracticeSetup): string {
+  return setup.kind === 'conversation'
+    ? 'Hello. Begin the conversation naturally as the stated counterpart.'
+    : 'Hello. Please introduce yourself and ask the first question.';
 }
 
 export const SYSTEM_INSTRUCTION_FEEDBACK = `
