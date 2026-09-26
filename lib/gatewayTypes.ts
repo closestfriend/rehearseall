@@ -51,23 +51,25 @@ export interface ChatResponse {
   reply: string;
 }
 
-export interface LiveTokenRequest {
+export interface LiveSessionRequest {
   setup: PracticeSetup;
   /** Anti-repeat hint, initial mint only. */
   lastPersonaId?: string;
-  /** goAway reconnects need a fresh single-use token for the SAME persona. */
-  reconnect?: boolean;
-  /** Required when reconnect: true. */
-  sessionId?: string;
-  /** Required when reconnect: true. */
-  personaId?: string;
+  /** Browser WebRTC SDP offer. */
+  sdp: string;
 }
 
-export interface LiveTokenResponse {
-  /** Ephemeral token name — used as the client apiKey with apiVersion v1alpha. */
-  token: string;
-  model: string;
+export interface LiveSessionResponse {
   sessionId: string;
   personaId: string;
   personaName: string;
+  sdp: string;
+}
+
+export interface LiveScreenFrameRequest {
+  image: string;
+}
+
+export interface LiveScreenFrameResponse {
+  description: string;
 }

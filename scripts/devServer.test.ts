@@ -8,7 +8,8 @@ describe('apiModuleForPath', () => {
     expect(apiModuleForPath('/api/evaluate')).toBe('/api/evaluate.ts');
     expect(apiModuleForPath('/api/assessment-deck')).toBe('/api/assessment-deck.ts');
     expect(apiModuleForPath('/api/evaluate-assessment')).toBe('/api/evaluate-assessment.ts');
-    expect(apiModuleForPath('/api/live-token')).toBe('/api/live-token.ts');
+    expect(apiModuleForPath('/api/live-session')).toBe('/api/live-session.ts');
+    expect(apiModuleForPath('/api/live-screen-frame')).toBe('/api/live-screen-frame.ts');
   });
 
   it('does not claim frontend or unknown API routes', () => {

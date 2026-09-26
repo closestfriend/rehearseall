@@ -39,14 +39,14 @@ npm run preview
 
 ## Environment Setup
 
-The Gemini API key is **server-side only** (as of the gateway phase, Jul 2026):
-- Set `GEMINI_API_KEY` in `.env.local` (never a bare `.env` — it isn't gitignored). The same var is set in Vercel project env for all three environments.
+Provider keys are **server-side only**:
+- Set `GEMINI_API_KEY` (text/evaluation) and `OPENAI_API_KEY` (live voice and screen vision) in `.env.local` (never a bare `.env` — it isn't gitignored). Configure both in Vercel project env for all environments.
 - There is no `VITE_`-prefixed key anywhere — nothing key-like may ship in the bundle (`npm run check:bundle` enforces this after a build).
 - Local dev that exercises interviews needs the functions: use `npm run dev:full` (sources `.env.local`, runs a current `vercel dev`; the stale global CLI is broken for ESM functions). Plain `npm run dev`/`dev:phone` serve no `/api` — point them at a deployment with `VITE_API_BASE` if needed.
 
 ## Backend gateway (`api/`)
 
-All Gemini access goes through Vercel functions: `/api/chat` (text turns; server picks the persona, issues a `sessionId`, enforces a 40-turn ceiling), `/api/evaluate` (post-interview scoring), `/api/live-token` (voice; single-use config-locked ephemeral tokens — system instruction and voice never reach the client; `goAway` reconnects mint fresh tokens for the same persona), `/api/health`. Shared modules live in `api/_lib/` — **client code must never import from `api/_lib/`**; that boundary is what keeps prompt material (persona fragments and evaluator instructions in `api/_lib/prompts.ts`, model routing in `api/_lib/modelRouting.ts`) out of the bundle. `constants.ts` retains only public persona names. Two build-shape constraints, learned the hard way: `api/` has its own CommonJS package scope (`api/package.json` + `api/tsconfig.json`) because Vercel's builder does per-file transpile with no bundling, and no runtime import may cross the `api/` boundary (type-only imports are fine; `prompts.test.ts` drift-guards the by-value persona roster against `constants.ts`).
+Gemini text/evaluation calls go through Vercel functions: `/api/chat`, `/api/evaluate`, `/api/assessment-deck`, and `/api/evaluate-assessment`. Live voice uses `/api/live-session` to exchange a browser WebRTC offer for a GPT-Live session; `/api/live-screen-frame` sends occasional screen snapshots to a vision model and passes concise descriptions into the voice session. `/api/health` reports provider-key presence without revealing values. Shared modules live in `api/_lib/` — **client code must never import from `api/_lib/`**; that boundary keeps private prompt material and server-only logic out of the bundle. `constants.ts` retains only public persona names. Two build-shape constraints: `api/` has its own CommonJS package scope (`api/package.json` + `api/tsconfig.json`) because Vercel's builder does per-file transpile with no bundling, and no runtime import may cross the `api/` boundary (type-only imports are fine; `prompts.test.ts` drift-guards the by-value persona roster against `constants.ts`).
 
 ## Architecture
 
@@ -69,25 +69,22 @@ The app routes Gemini requests by workload:
 
 - **Interactive text generation**: `gemini-3.8-flash`, with `gemini-3.7-flash` fallback and low thinking for intelligent, low-latency repeated turns.
 - **Assessment deck + evaluation/debrief generation**: `gemini-3.8-flash`, with `gemini-3.7-flash` fallback and medium thinking for stronger topical selection and judgment.
-- **Live voice**: `gemini-3.1-flash-live-preview` for real-time native-audio streaming.
+- **Live voice**: OpenAI `gpt-live-1` over WebRTC, with `gpt-live-transcribe` for live transcript deltas. Screen descriptions use `gpt-5.6-luna` through Responses.
 
 Gemini 3 sampling controls such as `temperature`, `topP`, and `topK` are intentionally omitted; use the route's explicit thinking level instead.
 
 ### Voice Interview Architecture (VoiceInterview.tsx)
 
-The voice interview component uses Gemini's Live API with bidirectional audio streaming:
+The voice interview component uses GPT-Live with bidirectional audio over WebRTC:
 
 **Audio Processing Chain:**
-1. User's microphone input → 16kHz PCM encoding
-2. Continuous streaming to Gemini Live API via `sendRealtimeInput`
-3. AI response audio (24kHz) decoded and queued for playback
-4. Transcriptions accumulated in background buffers
-5. Text buffers flushed to transcript on `turnComplete` events
+1. Browser microphone track is negotiated directly with GPT-Live via WebRTC.
+2. Native audio playback arrives on the remote WebRTC media track.
+3. Transcript fragments arrive on the `oai-events` data channel and are accumulated.
+4. Screen-sharing rehearsals sample JPEG snapshots every five seconds; the vision endpoint returns short descriptions added as session context.
 
 **Key Technical Details:**
-- Two separate AudioContext instances (input: 16kHz, output: 24kHz)
-- Audio playback uses buffering with `nextStartTimeRef` to prevent gaps
-- Interruption handling: stops all playing audio sources when user speaks
+- Live audio encoding, playback, echo handling, and interruption behavior are managed by WebRTC/GPT-Live.
 - Transcription is collected asynchronously to avoid blocking audio pipeline
 - Volume visualization driven by RMS calculation from input samples
 - Audio capture: `echoCancellation: true`, `noiseSuppression: false`, `autoGainControl: false` — suppression and AGC are intentionally off to avoid degrading the audio Gemini receives
