@@ -69,7 +69,7 @@ The app routes Gemini requests by workload:
 
 - **Interactive text generation**: `gemini-3.8-flash`, with `gemini-3.7-flash` fallback and low thinking for intelligent, low-latency repeated turns.
 - **Assessment deck + evaluation/debrief generation**: `gemini-3.8-flash`, with `gemini-3.7-flash` fallback and medium thinking for stronger topical selection and judgment.
-- **Live voice**: OpenAI `gpt-live-1` over WebRTC, with `gpt-live-transcribe` for live transcript deltas. Screen descriptions use `gpt-5.6-luna` through Responses.
+- **Live voice**: OpenAI `gpt-live-1` over WebRTC, with native input/output transcript deltas. Do not send Realtime's `audio.input` transcription settings to `/v1/live/sessions`; GPT-Live rejects that field. Screen descriptions use `gpt-5.6-luna` through Responses.
 
 Gemini 3 sampling controls such as `temperature`, `topP`, and `topK` are intentionally omitted; use the route's explicit thinking level instead.
 

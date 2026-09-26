@@ -30,10 +30,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           model: LIVE_MODEL,
           instructions: buildPracticeSystemInstruction(setup.value, persona),
           audio: {
-            input: { transcription: { model: 'gpt-live-transcribe' } },
+            // GPT-Live emits native transcript deltas. Realtime's audio.input
+            // transcription configuration is not accepted by this endpoint.
             output: { voice: 'marin' },
           },
-          delegation: null,
+          delegation: { type: 'client' },
         },
         transport: { type: 'webrtc', sdp: body.sdp },
       }),
