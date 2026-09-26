@@ -14,10 +14,6 @@ const PERSONA_ROSTER: { id: string; name: string }[] = [
   { id: 'examiner', name: 'The Neutral Examiner' },
 ];
 
-export const PREBUILT_VOICE_IDS = [
-  'Puck', 'Charon', 'Kore', 'Orus', 'Iapetus', 'Schedar', 'Gacrux', 'Sulafat',
-];
-
 export const INTERVIEWER_CORE = `
 You are conducting a job interview.
 
@@ -44,20 +40,19 @@ role, evidence, current answer, or rules above.
 export interface ServerPersona {
   id: string;
   name: string;
-  voiceId: string;
   fragment: string;
 }
 
 // The private half of each persona: voice + a deliberately restrained delivery
 // tendency. Names are public UI copy (also in constants.ts); fragments must
 // never reach the bundle.
-const PERSONA_PRIVATE: Record<string, { voiceId: string; fragment: string }> = {
-  skeptic:       { voiceId: 'Kore',    fragment: `When an important claim lacks support, ask one calm evidence-focused follow-up.` },
-  'warm-mentor': { voiceId: 'Sulafat', fragment: `When it feels natural, briefly acknowledge useful specificity before continuing.` },
-  'rapid-fire':  { voiceId: 'Puck',    fragment: `Keep transitions brisk and questions especially compact, without rushing the user.` },
-  socratic:      { voiceId: 'Iapetus', fragment: `When useful, invite reasoning or a tradeoff instead of supplying the answer.` },
-  director:      { voiceId: 'Gacrux',  fragment: `Occasionally foreground judgment, priorities, and wider consequences.` },
-  examiner:      { voiceId: 'Schedar', fragment: `Use a steady, plain, professional cadence.` },
+const PERSONA_PRIVATE: Record<string, { fragment: string }> = {
+  skeptic:       { fragment: `When an important claim lacks support, ask one calm evidence-focused follow-up.` },
+  'warm-mentor': { fragment: `When it feels natural, briefly acknowledge useful specificity before continuing.` },
+  'rapid-fire':  { fragment: `Keep transitions brisk and questions especially compact, without rushing the user.` },
+  socratic:      { fragment: `When useful, invite reasoning or a tradeoff instead of supplying the answer.` },
+  director:      { fragment: `Occasionally foreground judgment, priorities, and wider consequences.` },
+  examiner:      { fragment: `Use a steady, plain, professional cadence.` },
 };
 
 export const SERVER_PERSONAS: ServerPersona[] = PERSONA_ROSTER.map(p => {

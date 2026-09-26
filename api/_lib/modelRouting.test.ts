@@ -33,8 +33,8 @@ describe('Gemini model routing', () => {
     });
   });
 
-  it('keeps the current low-latency native-audio Live model', () => {
-    expect(MODEL_ROUTES.LIVE.model).toBe('gemini-3.1-flash-live-preview');
+  it('does not route live voice through Gemini', () => {
+    expect(MODEL_ROUTES).not.toHaveProperty('LIVE');
   });
 
   it('does not add deprecated sampling controls', () => {

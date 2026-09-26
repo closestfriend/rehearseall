@@ -10,8 +10,8 @@ before flipping it public.
 ## Why we're not public yet
 
 **Update (2026-07-17, gateway branch):** the original reason — the key shipping
-in the client bundle — is FIXED. All Gemini access now goes through `/api`
-functions; the key is a server-only `GEMINI_API_KEY` and `npm run check:bundle`
+in the client bundle — is FIXED. Gemini access goes through `/api` functions;
+the key is a server-only `GEMINI_API_KEY` and `npm run check:bundle`
 proves the built bundle contains no key or prompt material. The remaining
 reason to stay quiet is different: the gateway has **no auth or quota yet**
 (phase 1 of `docs/superpowers/specs/2026-07-11-billing-and-variants-design.md`),
@@ -37,8 +37,8 @@ from a targeted bundle scraper. They exist to buy time, not to secure anything.
 **Actually secure the key (the real fix):**
 - [x] Move the key server-side: `/api/chat` + `/api/evaluate` hold the key as
       `GEMINI_API_KEY` and proxy text/evaluator calls to Gemini. *(gateway branch, 2026-07-17)*
-- [x] Voice (Live API): `/api/live-token` mints single-use, config-locked
-      **ephemeral tokens** server-side; the key never reaches the browser. *(same)*
+- [x] Voice (GPT-Live): `/api/live-session` exchanges WebRTC SDP server-side;
+      the OpenAI API key never reaches the browser. *(GPT-Live migration)*
 - [ ] Once the gateway branch merges to `main`, remove `VITE_GEMINI_API_KEY`
       from the Vercel build env (production still needs it until the merge).
 - [ ] Phase 2 (auth): require sign-in for interviews, closing the

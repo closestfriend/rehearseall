@@ -4,7 +4,8 @@ const API_ROUTES: Record<string, string> = {
   '/api/evaluate': '/api/evaluate.ts',
   '/api/assessment-deck': '/api/assessment-deck.ts',
   '/api/evaluate-assessment': '/api/evaluate-assessment.ts',
-  '/api/live-token': '/api/live-token.ts',
+  '/api/live-session': '/api/live-session.ts',
+  '/api/live-screen-frame': '/api/live-screen-frame.ts',
 };
 
 export function apiModuleForPath(pathname: string): string | null {

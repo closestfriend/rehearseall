@@ -7,10 +7,11 @@ outcome-aware debrief.
 
 ## Run locally
 
-Prerequisites: Node.js and a Gemini API key.
+Prerequisites: Node.js, a Gemini API key for text/evaluation, and an OpenAI API
+key with GPT-Live access for voice sessions and screen-share descriptions.
 
 1. Install dependencies with `npm install`.
-2. Set `GEMINI_API_KEY` in `.env.local`.
+2. Set `GEMINI_API_KEY` and `OPENAI_API_KEY` in `.env.local`.
 3. Start the web app and local API routes with `npm run dev:full`.
 
 The terminal prints the local URL. Plain `npm run dev` serves only the browser
@@ -40,9 +41,11 @@ confidential questions and is not affiliated with or endorsed by an assessment p
 
 Screen sharing is available only in compatible custom voice rehearsals and
 requires a browser that implements `navigator.mediaDevices.getDisplayMedia`.
-RehearseAll requests video without screen audio and sends a maximum of one JPEG
-frame per second to the live rehearsal partner. Stopping the browser share or
-ending the rehearsal stops every display track.
+RehearseAll requests video without screen audio and samples a JPEG frame every
+five seconds. A fast vision model summarizes the visible work and passes that
+description into the live voice session; raw screen frames are not sent into
+GPT-Live's audio stream. Stopping the browser share or ending the rehearsal
+stops every display track.
 
 ## Verification
 

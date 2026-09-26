@@ -1,5 +1,5 @@
 import type { AssessmentAnswer, AssessmentDeck, PracticeSetup, RehearsalSetup, InterviewMessage } from '../types';
-import type { AssessmentDeckRequest, AssessmentDeckResponse, EvaluateAssessmentRequest, EvaluateAssessmentResponse, GatewayError, ChatRequest, ChatResponse, EvaluateRequest, EvaluateResponse, LiveTokenRequest, LiveTokenResponse } from '../lib/gatewayTypes';
+import type { AssessmentDeckRequest, AssessmentDeckResponse, EvaluateAssessmentRequest, EvaluateAssessmentResponse, GatewayError, ChatRequest, ChatResponse, EvaluateRequest, EvaluateResponse, LiveSessionRequest, LiveSessionResponse, LiveScreenFrameRequest, LiveScreenFrameResponse } from '../lib/gatewayTypes';
 
 // '' = same-origin (deployed + vercel dev). Set VITE_API_BASE to a deployed
 // preview URL when running plain `npm run dev` / `npm run dev:phone`, which
@@ -48,8 +48,12 @@ export function sendChatTurn(body: ChatRequest): Promise<ChatResponse> {
   return post<ChatResponse>('/api/chat', body);
 }
 
-export function mintLiveToken(body: LiveTokenRequest): Promise<LiveTokenResponse> {
-  return post<LiveTokenResponse>('/api/live-token', body);
+export function createLiveSession(body: LiveSessionRequest): Promise<LiveSessionResponse> {
+  return post<LiveSessionResponse>('/api/live-session', body);
+}
+
+export function describeLiveScreenFrame(body: LiveScreenFrameRequest): Promise<LiveScreenFrameResponse> {
+  return post<LiveScreenFrameResponse>('/api/live-screen-frame', body);
 }
 
 export function generateAssessmentDeck(setup: RehearsalSetup): Promise<AssessmentDeckResponse> {

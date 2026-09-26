@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SERVER_PERSONAS, PREBUILT_VOICE_IDS, getPersona, pickPersona,
+  SERVER_PERSONAS, getPersona, pickPersona,
   buildInterviewerSystemInstruction, INTERVIEWER_CORE,
   buildPracticeKickoff, buildPracticeSystemInstruction, getFeedbackSystemInstruction,
   SYSTEM_INSTRUCTION_FEEDBACK,
@@ -36,11 +36,6 @@ describe('SERVER_PERSONAS', () => {
   it('has six personas with unique ids', () => {
     expect(SERVER_PERSONAS).toHaveLength(6);
     expect(new Set(SERVER_PERSONAS.map(p => p.id)).size).toBe(6);
-  });
-
-  it('maps every persona to a real prebuilt voice id', () => {
-    const voices = new Set(PREBUILT_VOICE_IDS);
-    for (const p of SERVER_PERSONAS) expect(voices.has(p.voiceId)).toBe(true);
   });
 
   it('gives every persona a non-empty name and fragment', () => {
