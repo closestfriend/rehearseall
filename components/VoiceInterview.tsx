@@ -46,6 +46,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
   const [liveTranscript, setLiveTranscript] = useState('');
   const [muted, setMuted] = useState(false);
   const [needsGesture, setNeedsGesture] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const transcriptionRef = useRef<string[]>([]);
   const currentInputBuffer = useRef('');
@@ -71,6 +72,18 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
     setup,
     typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined,
   );
+
+  const closeVoiceConnection = useCallback(() => {
+    const peer = peerRef.current;
+    if (peer) peer.onconnectionstatechange = null;
+    eventsRef.current?.close();
+    peer?.close();
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    eventsRef.current = null;
+    peerRef.current = null;
+    streamRef.current = null;
+    if (audioElRef.current) audioElRef.current.srcObject = null;
+  }, []);
 
   const flushBuffers = useCallback(() => {
     if (transcriptTimerRef.current !== null) {
@@ -123,6 +136,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
     }
     if (event.type === 'error' || event.type === 'session.error') {
       console.error('GPT-Live event error:', event.error ?? event);
+      setSessionError(event.error?.message || 'The voice connection encountered an error. Please try again.');
       setIsConnecting(false);
       setStatus('idle');
       return;
@@ -153,6 +167,11 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
   const startSession = useCallback(async () => {
     const attempt = ++sessionAttemptRef.current;
     isUnmountedRef.current = false;
+    closeVoiceConnection();
+    setSessionError(null);
+    setIsConnecting(true);
+    setStatus('connecting');
+    setNeedsGesture(false);
     const isCurrentAttempt = () => attempt === sessionAttemptRef.current && !isUnmountedRef.current;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } });
@@ -169,15 +188,18 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
         }
       };
       peer.onconnectionstatechange = () => {
+        if (!isCurrentAttempt()) return;
         if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
           setIsConnecting(false);
           setStatus('idle');
+          setSessionError('The voice connection was lost. Please try again.');
         }
       };
 
       const events = peer.createDataChannel('oai-events');
       eventsRef.current = events;
       events.onmessage = message => {
+        if (!isCurrentAttempt()) return;
         try { handleLiveEvent(JSON.parse(message.data) as LiveEvent); }
         catch (error) { console.error('Could not parse GPT-Live event:', error); }
       };
@@ -201,11 +223,14 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
       await peer.setRemoteDescription({ type: 'answer', sdp: session.sdp });
       await started;
     } catch (err) {
+      if (!isCurrentAttempt()) return;
       console.error('Failed to start GPT-Live voice session:', err);
+      closeVoiceConnection();
+      setSessionError(err instanceof Error ? err.message : 'The voice session could not start. Please try again.');
       setIsConnecting(false);
       setStatus('idle');
     }
-  }, [handleLiveEvent, lastPersonaId, onPersonaPicked, setup]);
+  }, [closeVoiceConnection, handleLiveEvent, lastPersonaId, onPersonaPicked, setup]);
 
   const stopScreenShare = useCallback(() => {
     screenShareActiveRef.current = false;
@@ -230,13 +255,11 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
       isUnmountedRef.current = true;
       sessionAttemptRef.current += 1;
       if (transcriptTimerRef.current !== null) window.clearTimeout(transcriptTimerRef.current);
-      eventsRef.current?.close();
-      peerRef.current?.close();
-      streamRef.current?.getTracks().forEach(track => track.stop());
+      closeVoiceConnection();
       videoStreamRef.current?.getTracks().forEach(track => track.stop());
       stopScreenShare();
     };
-  }, [startSession, stopScreenShare]);
+  }, [startSession, stopScreenShare, closeVoiceConnection]);
 
   useEffect(() => {
     let lock: { release: () => Promise<void> } | null = null;
@@ -363,6 +386,15 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
         channel.send(JSON.stringify({ type: 'session.close' }));
       });
     }
+    // Capture the final deltas received while session.close was draining.
+    flushBuffers();
+    closeVoiceConnection();
+    if (transcriptionRef.current.length === 0) {
+      setIsConnecting(false);
+      setStatus('idle');
+      setSessionError('No conversation was recorded, so there is nothing to evaluate. Please start the voice session again.');
+      return;
+    }
     onFinish(transcriptionRef.current);
   };
 
@@ -395,6 +427,19 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({ setup, lastPersonaId, o
         onFinish={handleFinish}
         onCancel={handleCancel}
       />
+      {sessionError && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,.65)', display: 'grid', placeItems: 'center', padding: 24 }}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="voice-error-title" aria-describedby="voice-error-message" style={{ background: '#fbfaf6', color: '#1c1b18', padding: 28, borderRadius: 12, maxWidth: 480, width: '100%' }}>
+            <h2 id="voice-error-title" style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Voice session unavailable</h2>
+            <p id="voice-error-message">{sessionError}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
+              <button type="button" autoFocus onClick={() => { stopScreenShare(); void startSession(); }} style={{ padding: '12px 18px', background: '#1c1b18', color: '#fbfaf6', borderRadius: 6 }}>Try again</button>
+              {transcriptionRef.current.length > 0 && <button type="button" onClick={handleFinish} style={{ padding: '12px 18px' }}>Finish with transcript</button>}
+              <button type="button" onClick={handleCancel} style={{ padding: '12px 18px' }}>Go back</button>
+            </div>
+          </div>
+        </div>
+      )}
       {cameraOn && (
         <video ref={videoElRef} autoPlay muted playsInline style={{
           position: 'fixed', top: 84, right: 24, width: 160, height: 120, borderRadius: 12,
