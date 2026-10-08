@@ -11,7 +11,7 @@ import ThemedSessionLog from './components/theme/ThemedSessionLog';
 import RehearsalLibrary from './components/RehearsalLibrary';
 import AssessmentRunner from './components/AssessmentRunner';
 import { AppStage, ConversationSetup, ResumeData, InterviewMessage, InterviewFeedback, HistoryEntry, PracticeSetup, RehearsalSetup } from './types';
-import { evaluateInterview } from './services/apiClient';
+import { evaluateInterview, getHistory, saveHistory as saveHistoryRemote, deleteHistory as deleteHistoryRemote } from './services/apiClient';
 import { mapSuggestionsToMessages, buildTranscriptMarkdown } from './lib/replySuggestions';
 import { LAST_PERSONA_STORAGE_KEY } from './constants';
 import { isConversationSetup, isRehearsalSetup, practiceDetail, practiceLengthLabel, practicePersonaLabel, practiceTitle } from './lib/practiceSetup';
@@ -19,11 +19,14 @@ import { createRehearsalSetup, REHEARSAL_PRESETS } from './lib/rehearsalCatalog'
 import { destinationForPreloadedPractice, destinationForRehearsal } from './lib/rehearsalNavigation';
 import { resetStageScroll, shouldShowHomeButton } from './lib/stageEffects';
 import { useTheme } from './contexts/ThemeContext';
+import AuthPanel from './components/AuthPanel';
+import { useAuth } from './contexts/AuthContext';
 
 const STORAGE_KEY = 'hireprep_history_v1';
 
 const App: React.FC = () => {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [stage, setStage] = useState<AppStage>(AppStage.LANDING);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [practiceKind, setPracticeKind] = useState<'conversation' | 'interview' | 'rehearsal'>('conversation');
@@ -84,6 +87,22 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+    void getHistory().then(({ history: remoteHistory }) => {
+      setHistory(current => {
+        const byId = new Map<string, HistoryEntry>();
+        [...current, ...remoteHistory].forEach(entry => byId.set(entry.id, entry));
+        const merged = [...byId.values()].sort((a, b) => b.date - a.date);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      });
+      // Upload local-only entries after the merge; the server upsert is idempotent.
+      const local = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as HistoryEntry[];
+      local.forEach(entry => { void saveHistoryRemote(entry).catch(error => console.error('History sync failed', error)); });
+    }).catch(error => console.error('History fetch failed', error));
+  }, [user]);
+
+  useEffect(() => {
     resetStageScroll(options => window.scrollTo(options));
   }, [stage]);
 
@@ -91,6 +110,7 @@ const App: React.FC = () => {
     const newHistory = [entry, ...history];
     setHistory(newHistory);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+    if (user) void saveHistoryRemote(entry).catch(error => console.error('History sync failed', error));
   };
 
   const deleteHistoryItem = (id: string, e: React.MouseEvent) => {
@@ -98,6 +118,7 @@ const App: React.FC = () => {
     const newHistory = history.filter(h => h.id !== id);
     setHistory(newHistory);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+    if (user) void deleteHistoryRemote(id).catch(error => console.error('History delete sync failed', error));
   };
 
   const handleStartResume = () => {
@@ -511,6 +532,7 @@ ${transcriptMd}
   // non-home stage has the same direct escape hatch.
   return (
     <>
+      <AuthPanel />
       {shouldShowHomeButton(stage) && (
         <button
           type="button"

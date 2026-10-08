@@ -130,7 +130,7 @@ export function validateAssessmentDeck(
   const ids = new Set<string>();
   for (const rawQuestion of deck.questions) {
     const question = validateQuestion(rawQuestion);
-    if (!question.ok) return question;
+    if (question.ok === false) return { ok: false, reason: question.reason };
     if (ids.has(question.value.id)) return { ok: false, reason: 'question.id duplicate' };
     ids.add(question.value.id);
     questions.push(question.value);

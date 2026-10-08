@@ -23,6 +23,7 @@ const AssessmentRunner: React.FC<Props> = ({ setup, onComplete, onCancel }) => {
   const [error, setError] = useState<string | null>(null);
   const [confirmBlanks, setConfirmBlanks] = useState(false);
   const [generationAttempt, setGenerationAttempt] = useState(0);
+  const [sessionId] = useState(() => crypto.randomUUID());
 
   const palette = transcriptTheme
     ? { canvas: '#e9e6dc', surface: '#fbfaf6', ink: '#1c1b18', muted: '#6d685c', signal: '#b3402a', rule: '#b9b4a5', soft: '#efe9d5' }
@@ -37,7 +38,7 @@ const AssessmentRunner: React.FC<Props> = ({ setup, onComplete, onCancel }) => {
     setDeck(null);
     setAnswers([]);
     setIndex(0);
-    generateAssessmentDeck(setup)
+    generateAssessmentDeck(setup, sessionId)
       .then(result => {
         if (!cancelled) setDeck(result);
       })
