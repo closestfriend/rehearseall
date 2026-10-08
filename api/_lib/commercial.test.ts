@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authorizeInterview, recordCostEvent } from './commercial';
+import { authorizeInterview, recordCostEvent, refundInterview } from './commercial';
 
 describe('commercial server boundary', () => {
   afterEach(() => {
@@ -57,5 +57,13 @@ describe('commercial server boundary', () => {
     const request = fetchSpy.mock.calls[0][1] as RequestInit;
     expect(request.body).not.toContain('prompt');
     expect(request.body).toContain('upstream_error');
+  });
+
+  it('refunds a charged interview through the server-side RPC', async () => {
+    vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-key');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('true', { status: 200 })));
+
+    await expect(refundInterview({ userId: 'u1', mode: 'text', sessionId: 's1' })).resolves.toBe(true);
   });
 });

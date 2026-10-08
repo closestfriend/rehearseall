@@ -94,6 +94,20 @@ export async function authorizeInterview(input: InterviewAuthorization): Promise
   return decision;
 }
 
+export async function refundInterview(input: Omit<InterviewAuthorization, 'initial'>): Promise<boolean> {
+  const response = await postJson('rpc/refund_interview', {
+    p_user_id: input.userId,
+    p_mode: input.mode,
+    p_session_id: input.sessionId,
+  });
+  if (!response.ok) {
+    console.error('[commercial:refund_failed]', response.status);
+    throw new CommercialError('upstream_error', 'Could not refund interview quota');
+  }
+  const parsed = await response.json() as boolean | boolean[];
+  return Array.isArray(parsed) ? parsed[0] === true : parsed === true;
+}
+
 export async function recordCostEvent(event: CostEvent): Promise<void> {
   try {
     const response = await postJson('cost_events', event);

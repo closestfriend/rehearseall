@@ -79,13 +79,17 @@ declare
   used_count integer;
   limit_count integer;
 begin
+  if p_mode not in ('text', 'voice', 'assessment') then
+    raise exception 'invalid interview mode';
+  end if;
+
   insert into public.profiles (id) values (p_user_id) on conflict (id) do nothing;
   select profiles.plan into current_plan from public.profiles where profiles.id = p_user_id for update;
 
   if not p_initial then
     if exists (
       select 1 from public.usage_events
-      where user_id = p_user_id and session_id = p_session_id and kind = 'interview_start'
+      where user_id = p_user_id and session_id = p_session_id and kind = 'interview_start' and mode = p_mode
     ) then
       select count(*)::integer into used_count
       from public.usage_events where user_id = p_user_id and kind = 'interview_start' and created_at >= month_start;
@@ -112,6 +116,30 @@ begin
 end;
 $$;
 
+create or replace function public.refund_interview(
+  p_user_id uuid,
+  p_mode text,
+  p_session_id text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_mode not in ('text', 'voice', 'assessment') then
+    raise exception 'invalid interview mode';
+  end if;
+
+  delete from public.usage_events
+  where user_id = p_user_id
+    and kind = 'interview_start'
+    and mode = p_mode
+    and session_id = p_session_id;
+  return found;
+end;
+$$;
+
 create or replace function public.claim_webhook_event(p_event_id text)
 returns boolean
 language plpgsql
@@ -124,3 +152,10 @@ begin
   return found;
 end;
 $$;
+
+revoke execute on function public.authorize_interview(uuid, text, text, boolean, integer, integer) from public, anon, authenticated;
+grant execute on function public.authorize_interview(uuid, text, text, boolean, integer, integer) to service_role;
+revoke execute on function public.refund_interview(uuid, text, text) from public, anon, authenticated;
+grant execute on function public.refund_interview(uuid, text, text) to service_role;
+revoke execute on function public.claim_webhook_event(text) from public, anon, authenticated;
+grant execute on function public.claim_webhook_event(text) to service_role;

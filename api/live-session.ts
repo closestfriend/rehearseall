@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyCors } from './_lib/cors';
 import { sendError, sendAuthError, sendCommercialError } from './_lib/http';
 import { requireUser } from './_lib/auth';
-import { authorizeInterview, recordCostEvent } from './_lib/commercial';
+import { authorizeInterview, recordCostEvent, refundInterview } from './_lib/commercial';
 import { validateSetup } from './_lib/validate';
 import { pickPersona, buildPracticeSystemInstruction } from './_lib/prompts';
 import type { ServerPersona } from './_lib/prompts';
@@ -75,6 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
     res.status(201).json(out);
   } catch (err) {
+    void refundInterview({ userId: user.id, mode: 'voice', sessionId })
+      .catch(error => console.error('[commercial:refund_failed]', error));
     void recordCostEvent({
       userId: user.id, sessionId, operation: 'live_session', mode: 'voice',
       provider: 'openai', model: LIVE_MODEL, succeeded: false, errorCode: 'upstream_error',

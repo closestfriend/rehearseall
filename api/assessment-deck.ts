@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError, sendAuthError } from './_lib/http';
 import { requireUser } from './_lib/auth';
-import { authorizeInterview, recordCostEvent } from './_lib/commercial';
+import { authorizeInterview, recordCostEvent, refundInterview } from './_lib/commercial';
 import { validateSetup } from './_lib/validate';
 import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
 import { buildAssessmentDeckPrompt, validateAssessmentDeck } from './_lib/assessmentDeck';
@@ -99,5 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       void recordCostEvent({ userId: user.id, operation: 'assessment_deck', mode: 'assessment', provider: 'google', model, succeeded: false, errorCode: 'upstream_error' });
     }
   }
+  void refundInterview({ userId: user.id, mode: 'assessment', sessionId })
+    .catch(error => console.error('[commercial:refund_failed]', error));
   sendError(res, 502, 'upstream_error', lastError);
 }
