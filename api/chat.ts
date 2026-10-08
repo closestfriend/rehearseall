@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import { applyCors } from './_lib/cors';
 import { sendError, sendAuthError, sendCommercialError } from './_lib/http';
 import { requireUser } from './_lib/auth';
-import { authorizeInterview, recordCostEvent } from './_lib/commercial';
+import { authorizeInterview, recordCostEvent, refundInterview } from './_lib/commercial';
 import { validateSetup, validateMessages } from './_lib/validate';
 import { getPersona, pickPersona, buildPracticeKickoff, buildPracticeSystemInstruction } from './_lib/prompts';
 import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
@@ -30,6 +30,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return sendError(res, 500, 'server_misconfigured', 'GEMINI_API_KEY unset');
   const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : crypto.randomUUID();
+  const persona = typeof body.personaId === 'string'
+    ? getPersona(body.personaId)
+    : pickPersona(typeof body.lastPersonaId === 'string' ? body.lastPersonaId : undefined);
+  if (!persona) return sendError(res, 400, 'bad_request', `chat: unknown personaId ${body.personaId}`);
   try {
     await authorizeInterview({
       userId: user.id,
@@ -41,11 +45,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sendCommercialError(res, error);
     return;
   }
-
-  const persona = typeof body.personaId === 'string'
-    ? getPersona(body.personaId)
-    : pickPersona(typeof body.lastPersonaId === 'string' ? body.lastPersonaId : undefined);
-  if (!persona) return sendError(res, 400, 'bad_request', `chat: unknown personaId ${body.personaId}`);
 
   const contents = [
     { role: 'user' as const, parts: [{ text: buildPracticeKickoff(setup.value) }] },
@@ -92,5 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
   }
+  void refundInterview({ userId: user.id, mode: 'text', sessionId })
+    .catch(error => console.error('[commercial:refund_failed]', error));
   sendError(res, 502, 'upstream_error', lastErr);
 }
