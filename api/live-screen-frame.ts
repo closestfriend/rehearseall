@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyCors } from './_lib/cors';
-import { sendError } from './_lib/http';
+import { sendError, sendAuthError } from './_lib/http';
+import { requireUser } from './_lib/auth';
+import { recordCostEvent } from './_lib/commercial';
 import type { LiveScreenFrameRequest, LiveScreenFrameResponse } from '../lib/gatewayTypes';
 
 const VISION_MODEL = 'gpt-5.6-luna';
@@ -9,12 +11,19 @@ const MAX_IMAGE_LENGTH = 2_500_000;
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   if (req.method !== 'POST') return sendError(res, 405, 'method_not_allowed');
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return sendError(res, 500, 'server_misconfigured', 'OPENAI_API_KEY unset');
   const body = (req.body ?? {}) as LiveScreenFrameRequest;
   if (typeof body.image !== 'string' || body.image.length > MAX_IMAGE_LENGTH
     || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(body.image))
     return sendError(res, 400, 'bad_request', 'live-screen-frame: invalid JPEG image');
+  let user: Awaited<ReturnType<typeof requireUser>>;
+  try {
+    user = await requireUser(req);
+  } catch (error) {
+    sendAuthError(res, error);
+    return;
+  }
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return sendError(res, 500, 'server_misconfigured', 'OPENAI_API_KEY unset');
 
   try {
     const upstream = await fetch('https://api.openai.com/v1/responses', {
@@ -42,8 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .filter(item => item.type === 'output_text').map(item => item.text ?? '').join('\n').trim();
     if (!description) return sendError(res, 502, 'upstream_error', 'screen vision returned no description');
     const out: LiveScreenFrameResponse = { description };
+    void recordCostEvent({ userId: user.id, operation: 'live_screen_frame', provider: 'openai', model: VISION_MODEL, succeeded: true });
     res.status(200).json(out);
   } catch (err) {
+    void recordCostEvent({ userId: user.id, operation: 'live_screen_frame', provider: 'openai', model: VISION_MODEL, succeeded: false, errorCode: 'upstream_error' });
     sendError(res, 502, 'upstream_error', err);
   }
 }

@@ -18,6 +18,7 @@ export type EvaluateResponse = InterviewFeedback;
 
 export interface AssessmentDeckRequest {
   setup: RehearsalSetup;
+  sessionId?: string;
 }
 export type AssessmentDeckResponse = AssessmentDeck;
 

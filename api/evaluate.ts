@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
 import { applyCors } from './_lib/cors';
-import { sendError } from './_lib/http';
+import { sendError, sendAuthError } from './_lib/http';
+import { requireUser } from './_lib/auth';
+import { recordCostEvent } from './_lib/commercial';
 import { validateSetup, validateMessages, LIMITS } from './_lib/validate';
 import { getFeedbackSystemInstruction } from './_lib/prompts';
 import { MODEL_ROUTES, generationConfig } from './_lib/modelRouting';
@@ -35,9 +37,6 @@ const FEEDBACK_SCHEMA = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   if (req.method !== 'POST') return sendError(res, 405, 'method_not_allowed');
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return sendError(res, 500, 'server_misconfigured', 'GEMINI_API_KEY unset');
-
   const body = (req.body ?? {}) as EvaluateRequest;
   const setup = validateSetup(body.setup);
   if (setup.ok === false) return sendError(res, 400, 'bad_request', `evaluate: ${setup.reason}`);
@@ -53,6 +52,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return sendError(res, 400, 'bad_request', `evaluate: ${transcript.reason}`);
   }
   if (transcript.value.length === 0) return sendError(res, 400, 'bad_request', 'evaluate: empty transcript');
+  let user: Awaited<ReturnType<typeof requireUser>>;
+  try {
+    user = await requireUser(req);
+  } catch (error) {
+    sendAuthError(res, error);
+    return;
+  }
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return sendError(res, 500, 'server_misconfigured', 'GEMINI_API_KEY unset');
 
   const ai = new GoogleGenAI({ apiKey: key });
   const prompt = buildEvaluatorPrompt(setup.value, formatTranscriptForEvaluator(transcript.value));
@@ -77,6 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         continue;
       }
       try {
+        void recordCostEvent({ userId: user.id, operation: 'evaluate', mode: 'text', provider: 'google', model, succeeded: true });
         res.status(200).json(JSON.parse(raw));
         return;
       } catch {
@@ -85,6 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     } catch (err) {
       lastErr = err;
+      void recordCostEvent({ userId: user.id, operation: 'evaluate', mode: 'text', provider: 'google', model, succeeded: false, errorCode: 'upstream_error' });
     }
   }
   sendError(res, 502, 'upstream_error', lastErr);

@@ -13,7 +13,7 @@ function responseDouble() {
 }
 
 const request = {
-  method: 'POST', headers: {}, body: {
+  method: 'POST', headers: { authorization: 'Bearer test-user-token' }, body: {
     setup: { text: 'Independent researcher', role: 'Researcher', experienceLevel: 'mid' },
     sdp: 'v=0\r\no=- 123 456 IN IP4 127.0.0.1\r\n',
   },
@@ -26,8 +26,23 @@ describe('GPT-Live session endpoint', () => {
     vi.restoreAllMocks();
   });
 
+  it('rejects an unauthenticated valid offer before calling OpenAI', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test-server-key');
+    const upstream = vi.fn();
+    vi.stubGlobal('fetch', upstream);
+    const res = responseDouble();
+    await handler({ ...request, headers: {} } as any, res as any);
+    expect(res.statusCode).toBe(401);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
   it('creates a WebRTC session without the unsupported Realtime audio.input field', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-server-key');
+    vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('SUPABASE_ANON_KEY', 'test-anon-key');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+    vi.stubEnv('FREE_MONTHLY_INTERVIEWS', '3');
+    vi.stubEnv('PRO_MONTHLY_INTERVIEWS', '30');
     const upstream = vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(init.body as string);
       // Reproduce the actual production rejection from GPT-Live, which has
@@ -50,7 +65,12 @@ describe('GPT-Live session endpoint', () => {
         session: { id: 'live_test' }, transport: { sdp: 'answer-sdp' },
       }), { status: 201 });
     });
-    vi.stubGlobal('fetch', upstream);
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/auth/v1/user')) return new Response(JSON.stringify({ id: 'user-123' }), { status: 200 });
+      if (url.includes('/rpc/authorize_interview')) return new Response(JSON.stringify({ allowed: true, plan: 'free', used: 1, remaining: 2 }), { status: 200 });
+      if (url.includes('/cost_events')) return new Response('', { status: 201 });
+      return upstream(url, init ?? {});
+    }));
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = responseDouble();
     await handler(request as any, res as any);
@@ -62,6 +82,11 @@ describe('GPT-Live session endpoint', () => {
 
   it('rejects an invalid offer without calling OpenAI', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-server-key');
+    vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('SUPABASE_ANON_KEY', 'test-anon-key');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+    vi.stubEnv('FREE_MONTHLY_INTERVIEWS', '3');
+    vi.stubEnv('PRO_MONTHLY_INTERVIEWS', '30');
     const upstream = vi.fn();
     vi.stubGlobal('fetch', upstream);
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -73,9 +98,17 @@ describe('GPT-Live session endpoint', () => {
 
   it('logs upstream failures while returning a safe error to the browser', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-server-key');
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
-      JSON.stringify({ error: { code: 'insufficient_quota' } }), { status: 429 },
-    )));
+    vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('SUPABASE_ANON_KEY', 'test-anon-key');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+    vi.stubEnv('FREE_MONTHLY_INTERVIEWS', '3');
+    vi.stubEnv('PRO_MONTHLY_INTERVIEWS', '30');
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url.endsWith('/auth/v1/user')) return new Response(JSON.stringify({ id: 'user-123' }), { status: 200 });
+      if (url.includes('/rpc/authorize_interview')) return new Response(JSON.stringify({ allowed: true, plan: 'free', used: 1, remaining: 2 }), { status: 200 });
+      if (url.includes('/cost_events')) return new Response('', { status: 201 });
+      return new Response(JSON.stringify({ error: { code: 'insufficient_quota' } }), { status: 429 });
+    }));
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = responseDouble();
     await handler(request as any, res as any);
