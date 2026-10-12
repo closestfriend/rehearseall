@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  HUNTER_REHEARSALS,
   REHEARSAL_PRESETS,
   createRehearsalSetup,
   findRehearsalPresets,
@@ -56,21 +55,6 @@ const EXPECTED_TITLES = [
 ] as const;
 
 describe('custom rehearsal catalog', () => {
-  it('offers the five Hunter-only conversation preloads requested for today', () => {
-    expect(HUNTER_REHEARSALS.map(preset => preset.setup.title)).toEqual([
-      'Contact A — presentation pre-read, warm',
-      'Contact B — 12 minutes, distracted',
-      'Contact C — supervisor joins, rigor check',
-      'Contact D — collaboration offer, pacing risk',
-      'Strategy 2027 — artist strategy call',
-    ]);
-    expect(new Set(HUNTER_REHEARSALS.map(preset => preset.id)).size).toBe(5);
-    expect(HUNTER_REHEARSALS.every(preset => preset.setup.kind === 'conversation')).toBe(true);
-
-    const karman = HUNTER_REHEARSALS.find(preset => preset.id === 'strategy-2027');
-    expect(karman?.setup.context.match(/^\d+\./gm)).toHaveLength(15);
-  });
-
   it('contains every screenshot title exactly once with the expected format totals', () => {
     expect(REHEARSAL_PRESETS).toHaveLength(43);
     expect(new Set(REHEARSAL_PRESETS.map(preset => preset.title)).size).toBe(43);

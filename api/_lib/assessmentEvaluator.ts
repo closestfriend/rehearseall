@@ -8,7 +8,7 @@ and item-specific criteria. Weight domain accuracy, reasoning quality,
 instruction following, guideline consistency, and appropriate uncertainty.
 Distinguish substantive errors from harmless differences in wording. Do not
 claim the assessment or score is official, affiliated with, or endorsed by
-an assessment provider.
+any assessment provider.
 
 Return valid JSON with:
 - score: number from 0 to 100

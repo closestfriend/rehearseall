@@ -9,7 +9,6 @@ import {
   formatRehearsalListedSize,
   resolveRehearsalSelection,
 } from '../lib/rehearsalCatalog';
-import { HUNTER_REHEARSALS } from '../lib/hunterRehearsals';
 import type { ConversationSetup, RehearsalFormat, RehearsalSetup } from '../types';
 
 interface Props {
@@ -59,41 +58,15 @@ const RehearsalLibrary: React.FC<Props> = ({ onBack, onStart }) => {
         <button type="button" onClick={onBack} className="rehearsal-focus" style={{ border: 0, background: 'none', color: palette.ink, font: 'inherit', fontWeight: 700, cursor: 'pointer', padding: '10px 0' }}>
           RehearseAll
         </button>
-        <div style={{ color: palette.muted, fontSize: 13 }}>{REHEARSAL_PRESETS.length} formats, {HUNTER_REHEARSALS.length} personal preloads</div>
+        <div style={{ color: palette.muted, fontSize: 13 }}>{REHEARSAL_PRESETS.length} formats</div>
       </header>
 
       <div style={{ maxWidth: 1500, margin: '0 auto', background: palette.surface, minHeight: 'calc(100vh - 77px)' }}>
         <section style={{ padding: mobile ? '28px 18px 22px' : '38px 32px 28px', borderBottom: `1px ${borderStyle} ${palette.rule}` }}>
           <h1 style={{ margin: 0, fontSize: mobile ? 36 : 56, lineHeight: 1.02, letterSpacing: '-0.035em', maxWidth: 760 }}>Choose the room before you enter it.</h1>
           <p style={{ margin: '16px 0 0', maxWidth: 760, color: palette.muted, lineHeight: 1.6, fontSize: 14 }}>
-            Practice is an independent collection built from public format descriptions and the titles in your dashboard. These are approximations—not official questions, scoring, or endorsement.
+            Practice formats are an independent collection built from public format descriptions. These are approximations—not official questions, scoring, or endorsement.
           </p>
-        </section>
-
-        <section style={{ padding: mobile ? '22px 58px 26px 18px' : '26px 64px 30px 32px', background: palette.soft, borderBottom: `1px ${borderStyle} ${palette.rule}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 18, flexWrap: 'wrap', marginBottom: 16 }}>
-            <div>
-              <h2 style={{ margin: 0, color: palette.signal, fontSize: 22, letterSpacing: '-.02em' }}>Today’s calls</h2>
-            </div>
-            <div style={{ maxWidth: 520, color: palette.muted, fontSize: 11.5, lineHeight: 1.5 }}>Five personal briefs are loaded in this private iteration. Select one to go straight to the voice-or-text choice.</div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
-            {HUNTER_REHEARSALS.map(preset => (
-              <button
-                key={preset.id}
-                type='button'
-                className='rehearsal-focus rehearsal-row'
-                onClick={() => onStart({ ...preset.setup })}
-                style={{ minHeight: 144, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 18, padding: '16px', textAlign: 'left', border: `1px ${borderStyle} ${palette.rule}`, background: palette.surface, color: palette.ink, font: 'inherit', cursor: 'pointer' }}
-              >
-                <span>
-                  <strong style={{ display: 'block', fontSize: 14, lineHeight: 1.35 }}>{preset.setup.title}</strong>
-                  <span style={{ display: 'block', marginTop: 8, color: palette.muted, fontSize: 11.5, lineHeight: 1.5 }}>{preset.summary}</span>
-                </span>
-                <span style={{ color: palette.signal, fontSize: 11, fontWeight: 750 }}>Choose voice or text</span>
-              </button>
-            ))}
-          </div>
         </section>
 
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'minmax(0, 1fr)' : '210px minmax(360px, 1fr) minmax(360px, 0.9fr)', minHeight: 720 }}>

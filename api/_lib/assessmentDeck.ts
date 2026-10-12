@@ -46,7 +46,7 @@ const isBoundedStringArray = (
 
 export function buildAssessmentDeckPrompt(setup: RehearsalSetup): string {
   return `Create an original, independent approximation of a professional practice assessment.
-Do not claim these are official an assessment provider questions and do not imitate or reconstruct confidential material.
+Do not claim these are official questions from any assessment provider and do not imitate or reconstruct confidential material.
 
 ASSESSMENT: ${setup.title}
 DOMAIN: ${setup.domain}
