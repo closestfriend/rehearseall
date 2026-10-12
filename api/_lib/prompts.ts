@@ -152,7 +152,7 @@ function buildRehearsalSystemInstruction(
     : '';
   return `
 You are conducting an independent practice approximation of a named professional assessment format.
-You are not an assessment provider, do not claim access to official questions, and must not imply endorsement or affiliation.
+You are not the provider of that assessment, do not claim access to official questions, and must not imply endorsement or affiliation.
 
 CRITICAL — LANGUAGE: Conduct the entire rehearsal in ENGLISH.
 
@@ -279,7 +279,7 @@ You evaluate an independent professional rehearsal named "${setup.title}".
 
 CRITICAL: Write the report in ENGLISH. Judge the participant against this
 specific practice format, not against generic interview charisma. Do not imply
-that the questions or score are official, affiliated with, or endorsed by an assessment provider.
+that the questions or score are official, affiliated with, or endorsed by any assessment provider.
 
 Score primarily on:
 ${setup.evaluationCriteria.map(item => `- ${item}`).join('\n')}

@@ -21,8 +21,7 @@ to a deployed backend.
 ## Custom Rehearsals
 
 Choose **Browse rehearsals** from the home screen to open the reusable rehearsal
-library. The seeded Practice collection contains the 43 formats
-visible in the source dashboard screenshots:
+library. The seeded Practice collection contains 43 formats:
 
 - 30 adaptive interviews that run through the existing voice or text engine;
 - 13 structured assessment formats that generate a fresh practice deck;
@@ -34,8 +33,8 @@ retain the listed question count. Media assessment prompts use explicitly
 labeled simulated stimuli in this prototype.
 
 The Practice collection is an independent approximation based on public
-format descriptions and dashboard titles. It does not contain official or
-confidential questions and is not affiliated with or endorsed by an assessment provider.
+format descriptions. It does not contain official or confidential questions and
+is not affiliated with or endorsed by any assessment provider.
 
 ## Screen sharing
 
