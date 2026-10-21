@@ -18,7 +18,7 @@ It is built as a self-hosted MCP server, which is how Alexa+ add-ons integrate.
 
 ### Try it
 
-Prerequisites: Node.js 20+, and an OpenRouter API key (or a Gemini API key).
+Prerequisites: Node.js 20.12+, and an OpenRouter API key (or a Gemini API key).
 
 ```bash
 npm install
