@@ -85,8 +85,9 @@ export function createRehearsalServer({ llm, store, userId, now = Date.now, newI
     {
       title: 'Start a rehearsal',
       description:
-        'Starts rehearsing a conversation and returns the counterpart\'s opening line. Use scenario_id for a preset, ' +
-        'or counterpart + goal for anything else ("my landlord", "tell them I\'m moving out"). ' +
+        'Starts rehearsing a conversation and returns the counterpart\'s opening line. Prefer a preset scenario_id when one fits: ' +
+        `${SCENARIOS.map(s => `${s.id} (${s.title})`).join('; ')}. ` +
+        'Otherwise pass counterpart + goal for anything else ("my landlord", "tell them I\'m moving out"). ' +
         'Speak counterpart_line verbatim, then send the user\'s reply to say_to_counterpart with the returned session_id.',
       inputSchema: {
         scenario_id: z.string().optional().describe('A preset id from list_scenarios'),

@@ -16,7 +16,8 @@
     "check:bundle": "npm run build && node scripts/check-bundle.mjs",
     "mcp": "set -a; . ./.env.local 2>/dev/null; set +a; tsx mcp/http.ts",
     "simulator": "vite --config simulator/vite.config.ts",
-    "demo": "set -a; . ./.env.local 2>/dev/null; set +a; node scripts/demo.mjs"
+    "demo": "set -a; . ./.env.local 2>/dev/null; set +a; node scripts/demo.mjs",
+    "mcp:reset": "rm -f mcp/.data/store.json && echo 'Rehearsal history cleared.'"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RehearseAll · Alexa+ add-on (simulated host)</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2335c6f4'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <div class="name">RehearseAll</div>
+        <div class="sub">Alexa+ add-on · simulated host</div>
+      </div>
+    </div>
+    <div id="status" class="status">connecting…</div>
+  </header>
+
+  <main class="layout">
+    <section class="device-wrap">
+      <div class="device">
+        <div class="screen">
+          <div id="banner" class="banner" hidden></div>
+          <div id="stage" class="stage" aria-live="polite"></div>
+          <div id="card" class="card" hidden>
+            <button id="card-close" class="card-close" aria-label="Close card">×</button>
+            <iframe id="card-frame" title="Add-on card" sandbox="allow-scripts"></iframe>
+          </div>
+        </div>
+        <div class="bezel-light" id="ring" aria-hidden="true"></div>
+      </div>
+
+      <div class="controls">
+        <button id="mic" class="mic" aria-label="Talk">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-2.07A7 7 0 0 0 19 12h-2Z"/></svg>
+        </button>
+        <form id="say" class="say">
+          <input id="text" autocomplete="off" placeholder="Talk to Alexa, or type here…">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+      <div class="chips" id="chips">
+        <button>What can I rehearse?</button>
+        <button>Help me practice asking my manager for a raise</button>
+        <button>I need to tell my landlord the heating is broken</button>
+        <button>How am I doing overall?</button>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="voice" checked> Speak replies</label>
+        <label><input type="checkbox" id="handsfree" checked> Hands-free during rehearsal</label>
+      </div>
+    </section>
+
+    <aside class="inspector">
+      <div class="inspector-head">
+        <span>MCP traffic</span>
+        <span class="hint">Streamable HTTP · JSON-RPC</span>
+      </div>
+      <ol id="log" class="log"></ol>
+    </aside>
+  </main>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
