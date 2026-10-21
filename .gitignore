@@ -27,3 +27,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# RehearseAll MCP local data (rehearsal history)
+mcp/.data
