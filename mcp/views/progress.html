@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RehearseAll progress</title>
+<style>
+  :root { --bg: #0d0f14; --panel: #161a22; --ink: #f2f0ea; --muted: #9aa0ab; --rule: #262b36; --hi: #7fd3c3; --lo: #f0a46b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; padding: 20px 22px; }
+  .wait { color: var(--muted); padding: 40px 0; text-align: center; }
+  .eyebrow { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 2px 0 14px; font-size: 20px; font-weight: 650; }
+  .focus { background: var(--panel); border-left: 3px solid var(--lo); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+  .focus b { color: var(--lo); }
+  .grid { display: grid; gap: 8px; }
+  .skill { display: grid; grid-template-columns: 140px 1fr 64px; align-items: center; gap: 12px; }
+  .name { font-weight: 600; }
+  .bar { height: 8px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--hi); border-radius: 4px; }
+  .skill.weak .bar i { background: var(--lo); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .trend { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .recent { margin-top: 16px; }
+  .recent div { display: flex; justify-content: space-between; border-top: 1px solid var(--rule); padding: 6px 0; color: var(--muted); }
+  .recent b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="app" class="wait">Loading your progress…</div>
+<script>
+  // Minimal MCP Apps view: ui/initialize -> ui/notifications/initialized -> render on tool-result.
+  const host = window.parent;
+  host.postMessage({ jsonrpc: '2.0', id: 1, method: 'ui/initialize', params: {
+    appInfo: { name: 'rehearseall-progress', version: '1.0.0' }, appCapabilities: {}, protocolVersion: '2026-01-26' } }, '*');
+
+  window.addEventListener('message', e => {
+    const m = e.data;
+    if (!m || m.jsonrpc !== '2.0') return;
+    if (m.id === 1 && m.result) host.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} }, '*');
+    if (m.method === 'ui/notifications/tool-result' && m.params?.structuredContent) render(m.params.structuredContent);
+  });
+
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  function render(d) {
+    const app = document.getElementById('app');
+    app.className = '';
+    if (!d.sessionsCompleted) { app.innerHTML = '<h1>No rehearsals yet</h1><p class="eyebrow">Finish one and your skills show up here.</p>'; return; }
+    const skills = [...(d.competencies || [])].sort((a, b) => b.average - a.average);
+    const weakest = d.weakest?.competency;
+    app.innerHTML = `
+      <div class="eyebrow">${d.sessionsCompleted} rehearsal${d.sessionsCompleted === 1 ? '' : 's'}</div>
+      <h1>Your conversation skills</h1>
+      ${weakest ? `<div class="focus">Focus on <b>${esc(weakest)}</b>${d.recommended ? ` · next up: ${esc(d.recommended.title)}` : ''}</div>` : ''}
+      <div class="grid">${skills.map(s => {
+        const change = s.sessions > 1 ? s.latest - s.first : 0;
+        const trend = s.sessions > 1 ? `<div class="trend">${change >= 0 ? '▲' : '▼'} ${Math.abs(change)}</div>` : '<div class="trend">1 session</div>';
+        return `<div class="skill ${s.competency === weakest ? 'weak' : ''}">
+          <span class="name">${esc(s.competency)}</span>
+          <div class="bar"><i style="width:${Math.max(2, Math.min(100, s.average))}%"></i></div>
+          <div class="num">${s.average}${trend}</div></div>`;
+      }).join('')}</div>
+      <div class="recent"><div class="eyebrow">Recent</div>${(d.recent || []).map(r =>
+        `<div><b>${esc(r.title)}</b><span>${Math.round(r.overallScore)}</span></div>`).join('')}</div>`;
+    host.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/size-changed', params: { height: document.body.scrollHeight } }, '*');
+  }
+</script>
+</body>
+</html>

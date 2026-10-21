@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RehearseAll scorecard</title>
+<style>
+  :root { --bg: #0d0f14; --panel: #161a22; --ink: #f2f0ea; --muted: #9aa0ab; --rule: #262b36; --hi: #7fd3c3; --lo: #f0a46b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; padding: 20px 22px; }
+  .wait { color: var(--muted); padding: 40px 0; text-align: center; }
+  header { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+  .ring { --v: 0; width: 84px; height: 84px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: conic-gradient(var(--hi) calc(var(--v) * 1%), var(--rule) 0); }
+  .ring span { width: 66px; height: 66px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; font-size: 26px; font-weight: 700; }
+  .eyebrow { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 2px 0 0; font-size: 19px; line-height: 1.3; font-weight: 650; }
+  .skills { display: grid; gap: 10px; margin: 6px 0 16px; }
+  .skill { background: var(--panel); border-radius: 12px; padding: 10px 12px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .name { font-weight: 600; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .delta { font-size: 12px; color: var(--muted); margin-left: 6px; font-weight: 500; }
+  .bar { height: 6px; border-radius: 3px; background: var(--rule); margin: 7px 0 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 3px; background: var(--hi); }
+  .skill.weak .bar i { background: var(--lo); }
+  .evidence { color: var(--muted); font-size: 13px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  ul { margin: 6px 0 0; padding-left: 18px; }
+  li { margin: 3px 0; }
+  .try { margin-top: 14px; background: var(--panel); border-left: 3px solid var(--hi); border-radius: 10px; padding: 10px 14px; }
+  .try q { display: block; font-size: 16px; margin-top: 4px; }
+  @media (max-width: 520px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="app" class="wait">Scoring your rehearsal…</div>
+<script>
+  // Minimal MCP Apps view: ui/initialize -> ui/notifications/initialized -> render on tool-result.
+  const host = window.parent;
+  let nextId = 1;
+  host.postMessage({ jsonrpc: '2.0', id: nextId++, method: 'ui/initialize', params: {
+    appInfo: { name: 'rehearseall-scorecard', version: '1.0.0' }, appCapabilities: {}, protocolVersion: '2026-01-26' } }, '*');
+
+  window.addEventListener('message', e => {
+    const m = e.data;
+    if (!m || m.jsonrpc !== '2.0') return;
+    if (m.id === 1 && m.result) host.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} }, '*');
+    if (m.method === 'ui/notifications/tool-result' && m.params?.structuredContent) render(m.params.structuredContent);
+  });
+
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  function render(d) {
+    const scores = [...(d.competencyScores || [])].sort((a, b) => b.score - a.score);
+    const weakest = scores.length ? scores[scores.length - 1].competency : null;
+    const prev = d.previous_averages || {};
+    const app = document.getElementById('app');
+    app.className = '';
+    app.innerHTML = `
+      <header>
+        <div class="ring" style="--v:${Math.round(d.overallScore)}"><span>${Math.round(d.overallScore)}</span></div>
+        <div><div class="eyebrow">${esc(d.title)} · ${d.exchanges ?? ''} exchanges</div><h1>${esc(d.headline)}</h1></div>
+      </header>
+      <div class="skills">${scores.map(s => {
+        const p = prev[s.competency];
+        const delta = typeof p === 'number' ? `<span class="delta">${s.score >= p ? '▲' : '▼'} vs ${p} avg</span>` : '';
+        return `<div class="skill ${s.competency === weakest ? 'weak' : ''}">
+          <div class="row"><span class="name">${esc(s.competency)}</span><span class="num">${Math.round(s.score)}${delta}</span></div>
+          <div class="bar"><i style="width:${Math.max(2, Math.min(100, s.score))}%"></i></div>
+          <div class="evidence">${esc(s.evidence)}</div></div>`;
+      }).join('')}</div>
+      <div class="cols">
+        <div><div class="eyebrow">What worked</div><ul>${(d.strengths || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+        <div><div class="eyebrow">What to work on</div><ul>${(d.improvements || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      </div>
+      <div class="try"><div class="eyebrow">Next time, try saying</div><q>${esc(d.tryNextTime)}</q></div>`;
+    host.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/size-changed', params: { height: document.body.scrollHeight } }, '*');
+  }
+</script>
+</body>
+</html>
