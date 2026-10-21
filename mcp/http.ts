@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { GeminiRehearsalLLM, type RehearsalLLM } from './llm';
@@ -6,6 +7,10 @@ import { OpenRouterRehearsalLLM, openRouterBrain } from './openrouter';
 import { createRehearsalServer } from './rehearsalServer';
 import { FileStore } from './store';
 import { geminiBrain, type BrainRequest, type HostBrain } from './hostBrain';
+
+// Optional .env.local (a fresh clone may not have one; shell env vars work too).
+const ENV_FILE = fileURLToPath(new URL('../.env.local', import.meta.url));
+if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
 
 const PORT = Number(process.env.MCP_PORT || 8787);
 const USER_ID = process.env.REHEARSEALL_USER || 'demo';
