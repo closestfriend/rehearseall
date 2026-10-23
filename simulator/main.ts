@@ -130,7 +130,12 @@ window.addEventListener('message', e => {
     logEntry('ui', 'host → ui/notifications/tool-result', 'MCP Apps', cardPayload.result.structuredContent ?? {});
   }
 });
-$('#card-close').addEventListener('click', () => { card.hidden = true; });
+$('#card-close').addEventListener('click', () => {
+  card.hidden = true;
+  if (handsFree.checked && !busy && !recognizer && !userStopped) {
+    startListening();
+  }
+});
 
 // ---------- voice ----------
 const synth = window.speechSynthesis;
@@ -163,6 +168,7 @@ function say(text: string, who: 'alexa' | 'them'): Promise<void> {
 
 const Recognition = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
 let recognizer: any = null;
+let userStopped = false;
 
 function startListening() {
   if (!Recognition || recognizer || busy) return;
@@ -186,7 +192,16 @@ function startListening() {
     setRing('');
     const said = finalText.trim();
     textInput.value = '';
-    if (said) void handleUtterance(said);
+    if (said) {
+      void handleUtterance(said);
+    } else if (handsFree.checked && !userStopped && !busy) {
+      // Re-arm so a short pause before speaking does not disable hands-free
+      setTimeout(() => {
+        if (!recognizer && !busy && handsFree.checked && !userStopped) {
+          startListening();
+        }
+      }, 400);
+    }
   };
   recognizer.onerror = () => { /* onend still fires */ };
   mic.classList.add('listening');
@@ -195,8 +210,14 @@ function startListening() {
 }
 
 mic.addEventListener('click', () => {
-  if (recognizer) recognizer.stop();
-  else { synth.cancel(); startListening(); }
+  if (recognizer) {
+    userStopped = true;
+    recognizer.stop();
+  } else {
+    userStopped = false;
+    synth.cancel();
+    startListening();
+  }
 });
 if (!Recognition) {
   mic.disabled = true;
@@ -256,6 +277,7 @@ function textOf(result: CallToolResult): string {
 async function handleUtterance(text: string) {
   if (busy || !text.trim()) return;
   busy = true;
+  userStopped = false;
   mic.disabled = true;
   setRing('thinking');
   bubble('you', text);
@@ -282,6 +304,11 @@ async function handleUtterance(text: string) {
       turns.push({ role: 'tool', toolCallId: reply.id, name: reply.name, result: data ?? textOf(result) });
       if (result.isError) continue; // let the host explain or recover
 
+      if (reply.name === 'start_rehearsal' || reply.name === 'say_to_counterpart') {
+        // Starting or advancing a rehearsal dismisses any previous card
+        card.hidden = true;
+      }
+
       await showCard(reply.name, reply.args, result);
 
       if (data?.counterpart_line) {
@@ -304,7 +331,13 @@ async function handleUtterance(text: string) {
     busy = false;
     mic.disabled = !Recognition;
     setRing('');
-    if (active && handsFree.checked) startListening();
+    if (handsFree.checked && !userStopped) {
+      setTimeout(() => {
+        if (!busy && !recognizer && handsFree.checked && !userStopped) {
+          startListening();
+        }
+      }, 500);
+    }
   }
 }
 
