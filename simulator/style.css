@@ -55,9 +55,12 @@ button { font: inherit; color: inherit; }
 .empty { margin: auto; text-align: center; color: var(--muted); max-width: 460px; }
 .empty h2 { color: var(--ink); font-size: 24px; letter-spacing: -.01em; margin: 0 0 6px; }
 
+[hidden] { display: none !important; }
 .card { position: absolute; inset: 12px 12px 12px auto; width: min(560px, 62%); z-index: 3; border-radius: 14px; overflow: hidden; background: #0d0f14; box-shadow: 0 20px 60px #000c, 0 0 0 1px #262b36; display: flex; }
+.card[hidden] { display: none !important; }
 .card iframe { border: 0; width: 100%; height: 100%; background: #0d0f14; }
-.card-close { position: absolute; top: 8px; right: 10px; z-index: 1; border: 0; background: #0009; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; }
+.card-close { position: absolute; top: 8px; right: 10px; z-index: 1; border: 0; background: #0009; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; color: var(--ink); }
+.card-close:hover { background: #000c; }
 
 .controls { display: flex; gap: 12px; align-items: center; }
 .mic { flex: none; width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer; background: var(--alexa); display: grid; place-items: center; box-shadow: 0 6px 24px #35c6f444; transition: transform .1s; }
