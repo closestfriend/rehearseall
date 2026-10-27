@@ -30,3 +30,7 @@ dist-ssr
 
 # RehearseAll MCP local data (rehearsal history)
 mcp/.data
+CLAUDE.md
+AGENTS.md
+.claude/
+.env

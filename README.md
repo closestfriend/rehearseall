@@ -63,7 +63,7 @@ Design choices that follow the Alexa+ model:
 - **Same prompts as the web app.** The counterpart and evaluator reuse
   RehearseAll's conversation prompts and model routing (`api/_lib`).
 
-### What is real and what is simulated
+### System Components (MCP Server & Local Host)
 
 Alexa+'s add-on tooling (MCP Toolkit, CLI, web simulator) is available to
 select partners only, so per the hackathon FAQ this ships with its own web host
@@ -131,7 +131,7 @@ stops every display track.
 
 ## Verification
 
-- `npm test` — run the Vitest suite.
-- `npm run build` — compile the production application.
-- `npm run check:bundle` — build and scan the client bundle for server-only
+- `npm test` - run the Vitest suite.
+- `npm run build` - compile the production application.
+- `npm run check:bundle` - build and scan the client bundle for server-only
   prompt fragments and API-key patterns.
